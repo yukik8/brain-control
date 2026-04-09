@@ -28,7 +28,7 @@ DATA_DIR    = "data/god"
 FEAT_FILE   = f"{DATA_DIR}/ImageFeatures.h5"
 LAYER       = "cnn8"
 ALPHA       = 100.0
-N_SHUFFLE   = 50
+N_SHUFFLE   = 1000
 
 ALL_SUBJECTS = ["Subject1", "Subject2", "Subject3", "Subject4", "Subject5"]
 ALL_ROIS     = ["ROI_V1", "ROI_V2", "ROI_V3", "ROI_V4",
@@ -129,7 +129,10 @@ def compute_bc(pred_features, cat_labels, n_shuffle=50, seed=42, mode="across"):
         var_brok_list.append(var_brok)
 
     bc_values = np.array(var_brok_list) / var_pres
-    return bc_values.mean(), bc_values.std(), var_pres, var_brok_list
+    # p値: 帰無仮説「BC=1」の下で BC≤1 になる割合（片側）
+    # BC>1 が有意 ⟺ p値が小さい
+    p_value = float(np.mean(bc_values <= 1.0))
+    return bc_values.mean(), bc_values.std(), var_pres, var_brok_list, p_value
 
 
 def effective_dimensionality(features):
@@ -186,7 +189,7 @@ def run_one(roi_key, layer, brain_all, datatype, stim_id, cat_id, feat, img_ids,
     mean_r = float(np.nanmean(r_vals))
 
     # BC
-    bc_mean, bc_std, var_pres, var_brok_list = compute_bc(
+    bc_mean, bc_std, var_pres, var_brok_list, p_value = compute_bc(
         pred_test, cat_test, n_shuffle=N_SHUFFLE, mode=shuffle_mode
     )
 
@@ -202,9 +205,10 @@ def run_one(roi_key, layer, brain_all, datatype, stim_id, cat_id, feat, img_ids,
         "n_voxels":     n_voxels,
         "mean_r":       mean_r,
         "var_pres":     var_pres,
-        "var_brok":     float(np.mean(var_brok_list)),
-        "bc_mean":      bc_mean,
+        "var_brok":  float(np.mean(var_brok_list)),
+        "bc_mean":   bc_mean,
         "bc_std":    bc_std,
+        "p_value":   p_value,
         "ed":        ed,
     }
 
@@ -264,17 +268,18 @@ def main():
                     r["subject"] = subject
                     all_results.append(r)
                     print(f"BC = {r['bc_mean']:.4f} ± {r['bc_std']:.4f}  "
-                          f"mean_r = {r['mean_r']:.4f}  ED = {r['ed']:.2f}")
+                          f"p = {r['p_value']:.4f}  mean_r = {r['mean_r']:.4f}  ED = {r['ed']:.2f}")
 
     # Summary table
     print(f"\n{'='*75}")
     print(f"  SUMMARY")
     print(f"{'='*75}")
-    print(f"  {'Subj':<9} {'Layer':<7} {'ROI':<10} {'Mode':<8} {'mean_r':>8} {'BC':>8} {'±':>6} {'ED':>7}")
-    print(f"  {'─'*9} {'─'*7} {'─'*10} {'─'*8} {'─'*8} {'─'*8} {'─'*6} {'─'*7}")
+    print(f"  {'Subj':<9} {'Layer':<7} {'ROI':<10} {'Mode':<8} {'mean_r':>8} {'BC':>8} {'±':>6} {'p':>7} {'ED':>7}")
+    print(f"  {'─'*9} {'─'*7} {'─'*10} {'─'*8} {'─'*8} {'─'*8} {'─'*6} {'─'*7} {'─'*7}")
     for r in all_results:
+        p_str = f"{r['p_value']:.4f}" if r['p_value'] > 0 else f"<{1/N_SHUFFLE:.4f}"
         print(f"  {r['subject']:<9} {r['layer']:<7} {r['roi']:<10} {r['shuffle_mode']:<8} "
-              f"{r['mean_r']:>8.4f} {r['bc_mean']:>8.4f} {r['bc_std']:>6.4f} {r['ed']:>7.2f}")
+              f"{r['mean_r']:>8.4f} {r['bc_mean']:>8.4f} {r['bc_std']:>6.4f} {p_str:>7} {r['ed']:>7.2f}")
 
     print("\nDone!")
     return all_results
