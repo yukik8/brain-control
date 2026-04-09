@@ -24,17 +24,18 @@ from sklearn.preprocessing import StandardScaler
 
 # ── Paths ───────────────────────────────────────────────────────────────────
 
-DATA_DIR   = "data/god"
-SUBJECT    = "Subject1"
-BRAIN_FILE = f"{DATA_DIR}/{SUBJECT}.mat"
-FEAT_FILE  = f"{DATA_DIR}/ImageFeatures.h5"
-LAYER      = "cnn8"
-ALPHA      = 100.0
-N_SHUFFLE  = 50
+DATA_DIR    = "data/god"
+FEAT_FILE   = f"{DATA_DIR}/ImageFeatures.h5"
+LAYER       = "cnn8"
+ALPHA       = 100.0
+N_SHUFFLE   = 50
 
-ALL_ROIS = ["ROI_V1", "ROI_V2", "ROI_V3", "ROI_V4",
-            "ROI_LOC", "ROI_FFA", "ROI_PPA",
-            "ROI_LVC", "ROI_HVC", "ROI_VC"]
+ALL_SUBJECTS = ["Subject1", "Subject2", "Subject3", "Subject4", "Subject5"]
+ALL_ROIS     = ["ROI_V1", "ROI_V2", "ROI_V3", "ROI_V4",
+                "ROI_LOC", "ROI_FFA", "ROI_PPA",
+                "ROI_LVC", "ROI_HVC", "ROI_VC"]
+ALL_LAYERS   = ["cnn1", "cnn2", "cnn3", "cnn4", "cnn5", "cnn6", "cnn7", "cnn8"]
+SHUFFLE_MODES = ["across", "within"]   # across-category / within-category
 
 
 # ── Loader: Subject*.mat (MATLAB v7.3 / HDF5) ───────────────────────────────
@@ -99,21 +100,31 @@ def within_category_variance(features, cat_labels):
     return float(np.mean(variances))
 
 
-def compute_bc(pred_features, cat_labels, n_shuffle=50, seed=42):
+def compute_bc(pred_features, cat_labels, n_shuffle=50, seed=42, mode="across"):
     """
+    mode:
+        "across" : shuffle all trials globally (カテゴリをまたいで入れ替え)
+        "within" : shuffle only within each category (カテゴリ内だけ入れ替え)
+
     Returns:
-        bc_mean   : mean BC across shuffles
-        bc_std    : std  of BC across shuffles
-        var_pres  : variability (preserved)
-        var_brok_list : list of variabilities (broken, one per shuffle)
+        bc_mean, bc_std, var_pres, var_brok_list
     """
     rng = np.random.default_rng(seed)
     var_pres = within_category_variance(pred_features, cat_labels)
 
     var_brok_list = []
     n = len(pred_features)
+    cats = np.unique(cat_labels)
+
     for _ in range(n_shuffle):
-        perm = rng.permutation(n)
+        if mode == "across":
+            perm = rng.permutation(n)
+        else:  # within
+            perm = np.arange(n)
+            for cat in cats:
+                idx = np.where(cat_labels == cat)[0]
+                perm[idx] = rng.permutation(idx)
+
         var_brok = within_category_variance(pred_features[perm], cat_labels)
         var_brok_list.append(var_brok)
 
@@ -132,7 +143,8 @@ def effective_dimensionality(features):
 
 # ── Single-ROI Run ───────────────────────────────────────────────────────────
 
-def run_one(roi_key, layer, brain_all, datatype, stim_id, cat_id, feat, img_ids):
+def run_one(roi_key, layer, brain_all, datatype, stim_id, cat_id, feat, img_ids,
+            shuffle_mode="across"):
     """Run BC analysis for one ROI × layer combination. Returns result dict."""
 
     # Split train / test (perception)
@@ -175,7 +187,7 @@ def run_one(roi_key, layer, brain_all, datatype, stim_id, cat_id, feat, img_ids)
 
     # BC
     bc_mean, bc_std, var_pres, var_brok_list = compute_bc(
-        pred_test, cat_test, n_shuffle=N_SHUFFLE
+        pred_test, cat_test, n_shuffle=N_SHUFFLE, mode=shuffle_mode
     )
 
     # Effective Dimensionality
@@ -184,13 +196,14 @@ def run_one(roi_key, layer, brain_all, datatype, stim_id, cat_id, feat, img_ids)
     n_voxels = brain_train.shape[1]
 
     return {
-        "roi":       roi_key,
-        "layer":     layer,
-        "n_voxels":  n_voxels,
-        "mean_r":    mean_r,
-        "var_pres":  var_pres,
-        "var_brok":  float(np.mean(var_brok_list)),
-        "bc_mean":   bc_mean,
+        "roi":          roi_key,
+        "layer":        layer,
+        "shuffle_mode": shuffle_mode,
+        "n_voxels":     n_voxels,
+        "mean_r":       mean_r,
+        "var_pres":     var_pres,
+        "var_brok":     float(np.mean(var_brok_list)),
+        "bc_mean":      bc_mean,
         "bc_std":    bc_std,
         "ed":        ed,
     }
@@ -200,56 +213,71 @@ def run_one(roi_key, layer, brain_all, datatype, stim_id, cat_id, feat, img_ids)
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--roi",       default=None, help="single ROI key, e.g. ROI_V1")
-    parser.add_argument("--layer",     default=LAYER)
-    parser.add_argument("--all-rois",  action="store_true")
+    parser.add_argument("--subject",       default=None, help="e.g. Subject1")
+    parser.add_argument("--all-subjects",  action="store_true")
+    parser.add_argument("--roi",           default=None)
+    parser.add_argument("--layer",         default=LAYER)
+    parser.add_argument("--all-rois",      action="store_true")
+    parser.add_argument("--all-layers",    action="store_true")
+    parser.add_argument("--shuffle-mode",  default="across", choices=["across", "within", "both"])
     args = parser.parse_args()
 
-    rois_to_run = ALL_ROIS if args.all_rois else [args.roi or "ROI_VC"]
-    layer = args.layer
+    subjects_to_run = ALL_SUBJECTS if args.all_subjects else [args.subject or "Subject1"]
+    rois_to_run     = ALL_ROIS     if args.all_rois     else [args.roi   or "ROI_VC"]
+    layers_to_run   = ALL_LAYERS   if args.all_layers   else [args.layer]
+    modes_to_run    = SHUFFLE_MODES if args.shuffle_mode == "both" else [args.shuffle_mode]
 
-    print("=" * 60)
-    print(f"  BC — Feature Space  |  {SUBJECT} | {layer}")
-    print(f"  ROIs: {rois_to_run}")
-    print("=" * 60)
+    print("=" * 65)
+    print(f"  BC — Feature Space")
+    print(f"  Subjects: {subjects_to_run}")
+    print(f"  ROIs    : {rois_to_run}")
+    print(f"  Layers  : {layers_to_run}")
+    print(f"  Shuffle : {modes_to_run}")
+    print("=" * 65)
 
-    # Load brain data for all ROIs at once
-    print("\n[1] Loading brain data...")
-    brain_all = {}
-    datatype = stim_id = cat_id = None
-    for roi in rois_to_run:
-        b, dt, sid, cid = load_brain_data(BRAIN_FILE, roi_key=roi)
-        brain_all[roi] = b
-        datatype, stim_id, cat_id = dt, sid, cid
-        print(f"    {roi:10s}: {b.shape[1]:5d} voxels")
+    all_results = []
 
-    print("\n[2] Loading image features...")
-    feat, img_ids = load_image_features(FEAT_FILE, layer=layer)
-    print(f"    {layer}: {feat.shape}")
+    for subject in subjects_to_run:
+        brain_file = f"{DATA_DIR}/{subject}.mat"
+        print(f"\n{'━'*65}")
+        print(f"  Subject: {subject}")
+        print(f"{'━'*65}")
 
-    # Run BC for each ROI
-    results = []
-    for roi in rois_to_run:
-        print(f"\n{'─'*50}")
-        print(f"  ROI: {roi}  |  Layer: {layer}")
-        r = run_one(roi, layer, brain_all, datatype, stim_id, cat_id, feat, img_ids)
-        results.append(r)
-        print(f"  n_voxels = {r['n_voxels']:4d}  |  mean_r = {r['mean_r']:.4f}")
-        print(f"  Var(pres) = {r['var_pres']:.4f}  |  Var(brok) = {r['var_brok']:.4f}")
-        print(f"  >>> BC = {r['bc_mean']:.4f} ± {r['bc_std']:.4f}   ED = {r['ed']:.2f}")
+        # Load brain data for all ROIs
+        print("  Loading brain data...")
+        brain_all = {}
+        datatype = stim_id = cat_id = None
+        for roi in rois_to_run:
+            b, dt, sid, cid = load_brain_data(brain_file, roi_key=roi)
+            brain_all[roi] = b
+            datatype, stim_id, cat_id = dt, sid, cid
+            print(f"    {roi:10s}: {b.shape[1]:5d} voxels")
+
+        for layer in layers_to_run:
+            feat, img_ids = load_image_features(FEAT_FILE, layer=layer)
+
+            for roi in rois_to_run:
+                for mode in modes_to_run:
+                    print(f"  {subject} | {layer} | {roi} | {mode}", end="  →  ", flush=True)
+                    r = run_one(roi, layer, brain_all, datatype, stim_id, cat_id,
+                                feat, img_ids, shuffle_mode=mode)
+                    r["subject"] = subject
+                    all_results.append(r)
+                    print(f"BC = {r['bc_mean']:.4f} ± {r['bc_std']:.4f}  "
+                          f"mean_r = {r['mean_r']:.4f}  ED = {r['ed']:.2f}")
 
     # Summary table
-    print(f"\n{'='*60}")
-    print(f"  SUMMARY  —  {layer}")
-    print(f"{'='*60}")
-    print(f"  {'ROI':<10} {'Voxels':>7} {'mean_r':>8} {'BC':>8} {'±':>6} {'ED':>7}")
-    print(f"  {'─'*10} {'─'*7} {'─'*8} {'─'*8} {'─'*6} {'─'*7}")
-    for r in results:
-        print(f"  {r['roi']:<10} {r['n_voxels']:>7} {r['mean_r']:>8.4f} "
-              f"{r['bc_mean']:>8.4f} {r['bc_std']:>6.4f} {r['ed']:>7.2f}")
+    print(f"\n{'='*75}")
+    print(f"  SUMMARY")
+    print(f"{'='*75}")
+    print(f"  {'Subj':<9} {'Layer':<7} {'ROI':<10} {'Mode':<8} {'mean_r':>8} {'BC':>8} {'±':>6} {'ED':>7}")
+    print(f"  {'─'*9} {'─'*7} {'─'*10} {'─'*8} {'─'*8} {'─'*8} {'─'*6} {'─'*7}")
+    for r in all_results:
+        print(f"  {r['subject']:<9} {r['layer']:<7} {r['roi']:<10} {r['shuffle_mode']:<8} "
+              f"{r['mean_r']:>8.4f} {r['bc_mean']:>8.4f} {r['bc_std']:>6.4f} {r['ed']:>7.2f}")
 
     print("\nDone!")
-    return results
+    return all_results
 
 
 if __name__ == "__main__":
