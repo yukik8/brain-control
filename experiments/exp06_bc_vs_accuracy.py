@@ -1,11 +1,14 @@
 """
-analyze_bc_vs_accuracy.py
+exp06_bc_vs_accuracy.py
 --------------------------
 Experiment 6: BC と デコーダー精度（mean_r）の関係
 
 - BCがmean_rの単純な言い換えに過ぎないなら相関が高くなる
 - 独立した指標であれば、精度が同じでもBCが異なる条件が存在するはず
 """
+
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 import matplotlib
@@ -93,8 +96,8 @@ def plot_bc_vs_accuracy(results):
     ax.legend(fontsize=7, ncol=2)
 
     fig.tight_layout()
-    fig.savefig("bc_vs_accuracy.png", dpi=150)
-    print(f"\nSaved: bc_vs_accuracy.png")
+    fig.savefig("outputs/bc_vs_accuracy.png", dpi=150)
+    print(f"\nSaved: outputs/bc_vs_accuracy.png")
 
     # 全体の相関
     print(f"\n{'='*50}")
