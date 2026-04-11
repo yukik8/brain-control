@@ -288,61 +288,57 @@ def main():
     ax.axhline(bc_hvc_m, color="coral", linestyle="--", linewidth=2,
                label=f"HVC (no noise) BC={bc_hvc_m:.3f}")
     ax.axhline(1.0, color="gray", linestyle=":", linewidth=1, alpha=0.7, label="BC=1 (prior)")
-    ax.set_xlabel("ノイズ強度 σ（標準化済み脳活動に加算）")
-    ax.set_ylabel("BC（脳制御度）")
-    ax.set_title("BC vs ノイズ強度（V1）")
+    ax.set_xlabel("Noise level sigma (added to standardized brain signals)")
+    ax.set_ylabel("BC (Degree of Brain Control)")
+    ax.set_title("BC vs Noise level (V1)")
     ax.legend(fontsize=8)
 
     # (2) ノイズ強度 vs 識別精度
     ax = axes[1]
     ax.plot(NOISE_LEVELS, acc_list, color="steelblue", marker="o", linewidth=2,
-            markersize=6, label="V1 + ノイズ")
+            markersize=6, label="V1 + noise")
     ax.axhline(acc_hvc, color="coral", linestyle="--", linewidth=2,
-               label=f"HVC（ノイズなし） 精度={acc_hvc:.3f}")
-    ax.axhline(1/50, color="gray", linestyle=":", linewidth=1, alpha=0.7, label="チャンス（0.02）")
-    ax.set_xlabel("ノイズ強度 σ")
-    ax.set_ylabel("Top-1 識別精度")
-    ax.set_title("識別精度 vs ノイズ強度（V1）")
+               label=f"HVC (no noise) Acc={acc_hvc:.3f}")
+    ax.axhline(1/50, color="gray", linestyle=":", linewidth=1, alpha=0.7, label="Chance (0.02)")
+    ax.set_xlabel("Noise level sigma")
+    ax.set_ylabel("Top-1 Identification Accuracy")
+    ax.set_title("Accuracy vs Noise level (V1)")
     ax.legend(fontsize=8)
 
     # (3) 精度 vs BC の散布図（全条件）
     ax = axes[2]
-    # V1 + noise の軌跡
     sc = ax.scatter(acc_list, bc_list, c=NOISE_LEVELS, cmap="Blues_r",
                     s=80, zorder=3, edgecolors="black", linewidth=0.7,
-                    label="V1 + ノイズ（σ=0→5）")
+                    label="V1 + noise (sigma=0 to 5)")
     for i, sigma in enumerate(NOISE_LEVELS):
         if sigma in [0.0, 1.0, 3.0]:
-            ax.annotate(f"σ={sigma:.1f}", (acc_list[i], bc_list[i]),
+            ax.annotate(f"s={sigma:.1f}", (acc_list[i], bc_list[i]),
                         xytext=(5, 3), textcoords="offset points", fontsize=8)
-    # V1→noise の軌跡線
     ax.plot(acc_list, bc_list, color="steelblue", linewidth=1.5,
             alpha=0.5, linestyle="-")
-    # HVC ベースライン
     ax.scatter([acc_hvc], [bc_hvc_m], color="coral", s=120, zorder=4,
-               marker="*", edgecolors="black", linewidth=0.7, label="HVC（ノイズなし）")
+               marker="*", edgecolors="black", linewidth=0.7, label="HVC (no noise)")
     ax.annotate("HVC", (acc_hvc, bc_hvc_m),
                 xytext=(5, -10), textcoords="offset points", fontsize=9, color="coral")
 
-    # 「同精度・異BC」の対応する点を強調
     ax.annotate(
-        f"同精度 ≈ {acc_list[best_idx]:.2f}\nBC: {bc_list[best_idx]:.3f} vs {bc_hvc_m:.3f}",
+        f"Same Acc~{acc_list[best_idx]:.2f}\nBC: {bc_list[best_idx]:.3f} vs {bc_hvc_m:.3f}",
         xy=(acc_list[best_idx], bc_list[best_idx]),
         xytext=(acc_list[best_idx] + 0.03, bc_list[best_idx] + 0.005),
         fontsize=8, color="navy",
         arrowprops=dict(arrowstyle="->", color="navy"),
     )
 
-    plt.colorbar(sc, ax=ax, label="ノイズ強度 σ")
+    plt.colorbar(sc, ax=ax, label="Noise level sigma")
     ax.axhline(1.0, color="gray", linestyle=":", linewidth=1, alpha=0.5)
-    ax.set_xlabel("Top-1 識別精度")
-    ax.set_ylabel("BC（脳制御度）")
-    ax.set_title("同精度・異BC の実証\n（V1+ノイズ軌跡 vs HVC）")
+    ax.set_xlabel("Top-1 Identification Accuracy")
+    ax.set_ylabel("BC (Degree of Brain Control)")
+    ax.set_title("Same Accuracy, Different BC\n(V1+noise trajectory vs HVC)")
     ax.legend(fontsize=8)
 
     plt.suptitle(
-        "Exp16: 同精度・異BC — V1 ノイズ注入 vs HVC\n"
-        "BC は識別精度では捉えられないシグナル構造の劣化を検出する",
+        "Exp16: Same Accuracy, Different BC — V1 noise injection vs HVC\n"
+        "BC detects structural degradation that accuracy cannot detect",
         fontsize=11
     )
     plt.tight_layout()

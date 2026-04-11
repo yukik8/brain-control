@@ -61,7 +61,7 @@ def main():
     # (1) 正規化カーブ（メイン図）
     ax = axes[0]
     ax.plot(noise_levels, bc_norm, color="steelblue", marker="o",
-            linewidth=2.5, markersize=7, label="BC（脳制御度）")
+            linewidth=2.5, markersize=7, label="BC (Degree of Brain Control)")
     ax.fill_between(
         noise_levels,
         bc_norm - bc_stds / (bc_max - bc_min),
@@ -69,18 +69,16 @@ def main():
         alpha=0.2, color="steelblue"
     )
     ax.plot(noise_levels, acc_norm, color="tomato", marker="s",
-            linewidth=2.5, markersize=7, label="識別精度", linestyle="--")
+            linewidth=2.5, markersize=7, label="Identification Accuracy", linestyle="--")
 
-    # HVC の水平線（同精度ペアの可視化）
     ax.axhline(bc_hvc_norm, color="steelblue", linestyle=":", linewidth=1.5, alpha=0.6,
-               label=f"HVC BC（ノイズなし）")
+               label="HVC BC (no noise)")
     ax.axhline(acc_hvc_norm, color="tomato", linestyle=":", linewidth=1.5, alpha=0.6,
-               label=f"HVC 識別精度（ノイズなし）")
+               label="HVC Accuracy (no noise)")
 
-    # 「同精度・異BC」の点を強調（σ=0.75）
     idx_075 = list(noise_levels).index(0.75)
     ax.annotate(
-        f"同精度 (σ=0.75)\nBC差 d={cohens_d:.2f}, p={p_val:.3f}",
+        f"Same Acc (s=0.75)\nBC diff d={cohens_d:.2f}, p={p_val:.3f}",
         xy=(noise_levels[idx_075], bc_norm[idx_075]),
         xytext=(1.5, 0.35),
         fontsize=9, color="navy",
@@ -88,41 +86,38 @@ def main():
         bbox=dict(boxstyle="round,pad=0.3", facecolor="lightyellow", edgecolor="navy"),
     )
 
-    ax.set_xlabel("ノイズ強度 σ", fontsize=11)
-    ax.set_ylabel("正規化スコア（0=下限, 1=ノイズなし）", fontsize=11)
-    ax.set_title("BC は識別精度より敏感にノイズ劣化を検出する\n（V1 ノイズ注入実験）", fontsize=12)
+    ax.set_xlabel("Noise level sigma", fontsize=11)
+    ax.set_ylabel("Normalized score (0=floor, 1=no-noise baseline)", fontsize=11)
+    ax.set_title("BC is more sensitive to noise degradation than accuracy\n(V1 noise injection)", fontsize=12)
     ax.legend(fontsize=9, loc="upper right")
     ax.set_ylim(-0.05, 1.15)
     ax.grid(True, alpha=0.3)
 
     # (2) 降下率の比較（Δ per unit σ）
     ax = axes[1]
-    # 各ノイズステップでの降下量（ノイズなし→各σ）
-    bc_drop  = bc_norm[0]  - bc_norm   # ノイズなしからの低下量
+    bc_drop  = bc_norm[0]  - bc_norm
     acc_drop = acc_norm[0] - acc_norm
 
     ax.plot(noise_levels, bc_drop, color="steelblue", marker="o",
-            linewidth=2.5, markersize=7, label="BC の低下量")
+            linewidth=2.5, markersize=7, label="BC degradation")
     ax.plot(noise_levels, acc_drop, color="tomato", marker="s",
-            linewidth=2.5, markersize=7, label="識別精度の低下量", linestyle="--")
+            linewidth=2.5, markersize=7, label="Accuracy degradation", linestyle="--")
 
-    # 2つの曲線の差（BC が余分に落ちている量）
-    extra_drop = bc_drop - acc_drop
     ax.fill_between(noise_levels, acc_drop, bc_drop,
                     where=(bc_drop >= acc_drop),
                     alpha=0.15, color="steelblue",
-                    label="BC の超過低下（BC sensitivity advantage）")
+                    label="BC sensitivity advantage")
 
-    ax.set_xlabel("ノイズ強度 σ", fontsize=11)
-    ax.set_ylabel("ノイズなしからの低下量（正規化）", fontsize=11)
-    ax.set_title("BC の感度優位性\n（BC は精度より速く劣化を反映する）", fontsize=12)
+    ax.set_xlabel("Noise level sigma", fontsize=11)
+    ax.set_ylabel("Degradation from no-noise baseline (normalized)", fontsize=11)
+    ax.set_title("BC sensitivity advantage\n(BC degrades faster than accuracy)", fontsize=12)
     ax.legend(fontsize=9)
     ax.grid(True, alpha=0.3)
     ax.set_ylim(-0.05, 1.1)
 
     plt.suptitle(
-        "BC の感度優位性: 識別精度では捉えられない構造劣化を検出する\n"
-        f"V1 ノイズ注入実験（Subject1, relu7 特徴量）",
+        "BC detects structural degradation that accuracy cannot detect\n"
+        f"V1 noise injection experiment (Subject1, relu7 features)",
         fontsize=12, fontweight="bold"
     )
     plt.tight_layout()
