@@ -58,7 +58,15 @@ def fname_to_imageid(fname):
 
 
 def compute_bc(pred_features, cat_labels, n_shuffle=1000, seed=42):
-    """BCを計算する（across-shuffle方式）。"""
+    """
+    BCを計算する（across-shuffle方式）。
+
+    Returns
+    -------
+    bc_mean    : float   全カテゴリ平均BC
+    bc_sem     : float   標準誤差
+    bc_per_cat : ndarray カテゴリ別BC（Cohen's d 計算用）
+    """
     rng = np.random.default_rng(seed)
     n = len(pred_features)
     cats = np.unique(cat_labels)
@@ -79,7 +87,7 @@ def compute_bc(pred_features, cat_labels, n_shuffle=1000, seed=42):
     var_broken_mean = var_broken_acc / n_shuffle
 
     bc_per_cat = var_broken_mean / var_pres_per_cat
-    return float(np.mean(bc_per_cat)), float(np.std(bc_per_cat) / np.sqrt(len(cats)))
+    return float(np.mean(bc_per_cat)), float(np.std(bc_per_cat) / np.sqrt(len(cats))), bc_per_cat
 
 
 def compute_accuracy(pred_features, cat_labels):
@@ -204,20 +212,23 @@ def main():
         pred   = f_sc_v1.inverse_transform(pred_n).astype(np.float32)
 
         # BC と精度の計算
-        bc_m, bc_s = compute_bc(pred, cat_test, N_SHUFFLE, SEED)
-        acc        = compute_accuracy(pred, cat_test)
+        bc_m, bc_s, bc_cats = compute_bc(pred, cat_test, N_SHUFFLE, SEED)
+        acc                 = compute_accuracy(pred, cat_test)
 
         bc_list.append(bc_m)
         std_list.append(bc_s)
         acc_list.append(acc)
+        # カテゴリ別BC配列も保持（Cohen's d 計算用）
+        if sigma == 0.75:
+            bc_per_cat_v1_sigma075 = bc_cats
         print(f"{sigma:>8.2f} {bc_m:>8.4f} {bc_s:>7.4f} {acc:>7.3f}")
 
     # ── HVC ベースラインの計算 ──
     print("\nHVC ベースライン...")
     pred_hvc_n = decoder_hvc.predict(brain_test_hvc_n)
     pred_hvc   = f_sc_hvc.inverse_transform(pred_hvc_n).astype(np.float32)
-    bc_hvc_m, bc_hvc_s = compute_bc(pred_hvc, cat_test, N_SHUFFLE, SEED)
-    acc_hvc            = compute_accuracy(pred_hvc, cat_test)
+    bc_hvc_m, bc_hvc_s, bc_per_cat_hvc = compute_bc(pred_hvc, cat_test, N_SHUFFLE, SEED)
+    acc_hvc                             = compute_accuracy(pred_hvc, cat_test)
     print(f"HVC: BC={bc_hvc_m:.4f} ± {bc_hvc_s:.4f},  Acc={acc_hvc:.3f}")
 
     bc_list  = np.array(bc_list)
@@ -234,6 +245,38 @@ def main():
           f"BC={bc_list[best_idx]:.4f}")
     print(f"精度差: {acc_diffs[best_idx]:.3f},  BC差: {bc_list[best_idx] - bc_hvc_m:.4f}")
 
+    # ── Cohen's d と 95% CI の計算 ──
+    # V1+noise(σ=0.75) と HVC の カテゴリ別BC を比較
+    from scipy import stats as scipy_stats
+
+    a = bc_per_cat_v1_sigma075  # V1+noise σ=0.75 のカテゴリ別BC
+    b = bc_per_cat_hvc           # HVC のカテゴリ別BC
+    n_a, n_b = len(a), len(b)
+
+    # プールした標準偏差
+    pooled_std = np.sqrt(((n_a - 1) * np.var(a, ddof=1) + (n_b - 1) * np.var(b, ddof=1))
+                         / (n_a + n_b - 2))
+    cohens_d   = (np.mean(b) - np.mean(a)) / (pooled_std + 1e-10)
+
+    # Welch の t 検定
+    t_stat, p_val = scipy_stats.ttest_ind(a, b, equal_var=False)
+
+    # 平均差の 95% CI（Welch の信頼区間）
+    mean_diff = float(np.mean(b) - np.mean(a))
+    se_diff   = float(np.sqrt(np.var(a, ddof=1)/n_a + np.var(b, ddof=1)/n_b))
+    df        = (np.var(a, ddof=1)/n_a + np.var(b, ddof=1)/n_b)**2 / (
+                 (np.var(a, ddof=1)/n_a)**2/(n_a-1) + (np.var(b, ddof=1)/n_b)**2/(n_b-1))
+    t_crit    = scipy_stats.t.ppf(0.975, df)
+    ci_low    = mean_diff - t_crit * se_diff
+    ci_high   = mean_diff + t_crit * se_diff
+
+    print(f"\n=== 効果量・信頼区間 ===")
+    print(f"対象: V1+noise(σ=0.75) vs HVC（精度が最も近いペア）")
+    print(f"  平均BC差: {mean_diff:+.4f}  （HVC − V1+noise）")
+    print(f"  95% CI:  [{ci_low:.4f}, {ci_high:.4f}]")
+    print(f"  Cohen's d: {cohens_d:.3f}")
+    print(f"  t = {t_stat:.3f}, p = {p_val:.4f}")
+
     # ── プロット ──
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 
@@ -245,21 +288,21 @@ def main():
     ax.axhline(bc_hvc_m, color="coral", linestyle="--", linewidth=2,
                label=f"HVC (no noise) BC={bc_hvc_m:.3f}")
     ax.axhline(1.0, color="gray", linestyle=":", linewidth=1, alpha=0.7, label="BC=1 (prior)")
-    ax.set_xlabel("Noise level σ (added to standardized brain signals)")
-    ax.set_ylabel("BC (Degree of Brain Control)")
-    ax.set_title("BC vs Noise level (V1)")
+    ax.set_xlabel("ノイズ強度 σ（標準化済み脳活動に加算）")
+    ax.set_ylabel("BC（脳制御度）")
+    ax.set_title("BC vs ノイズ強度（V1）")
     ax.legend(fontsize=8)
 
     # (2) ノイズ強度 vs 識別精度
     ax = axes[1]
     ax.plot(NOISE_LEVELS, acc_list, color="steelblue", marker="o", linewidth=2,
-            markersize=6, label="V1 + noise")
+            markersize=6, label="V1 + ノイズ")
     ax.axhline(acc_hvc, color="coral", linestyle="--", linewidth=2,
-               label=f"HVC (no noise) Acc={acc_hvc:.3f}")
-    ax.axhline(1/50, color="gray", linestyle=":", linewidth=1, alpha=0.7, label="Chance (0.02)")
-    ax.set_xlabel("Noise level σ")
-    ax.set_ylabel("Top-1 Identification Accuracy")
-    ax.set_title("Accuracy vs Noise level (V1)")
+               label=f"HVC（ノイズなし） 精度={acc_hvc:.3f}")
+    ax.axhline(1/50, color="gray", linestyle=":", linewidth=1, alpha=0.7, label="チャンス（0.02）")
+    ax.set_xlabel("ノイズ強度 σ")
+    ax.set_ylabel("Top-1 識別精度")
+    ax.set_title("識別精度 vs ノイズ強度（V1）")
     ax.legend(fontsize=8)
 
     # (3) 精度 vs BC の散布図（全条件）
@@ -267,7 +310,7 @@ def main():
     # V1 + noise の軌跡
     sc = ax.scatter(acc_list, bc_list, c=NOISE_LEVELS, cmap="Blues_r",
                     s=80, zorder=3, edgecolors="black", linewidth=0.7,
-                    label="V1 + noise (σ=0→5)")
+                    label="V1 + ノイズ（σ=0→5）")
     for i, sigma in enumerate(NOISE_LEVELS):
         if sigma in [0.0, 1.0, 3.0]:
             ax.annotate(f"σ={sigma:.1f}", (acc_list[i], bc_list[i]),
@@ -277,29 +320,29 @@ def main():
             alpha=0.5, linestyle="-")
     # HVC ベースライン
     ax.scatter([acc_hvc], [bc_hvc_m], color="coral", s=120, zorder=4,
-               marker="*", edgecolors="black", linewidth=0.7, label=f"HVC (no noise)")
+               marker="*", edgecolors="black", linewidth=0.7, label="HVC（ノイズなし）")
     ax.annotate("HVC", (acc_hvc, bc_hvc_m),
                 xytext=(5, -10), textcoords="offset points", fontsize=9, color="coral")
 
     # 「同精度・異BC」の対応する点を強調
     ax.annotate(
-        f"Same Acc ≈ {acc_list[best_idx]:.2f}\nBC: {bc_list[best_idx]:.3f} vs {bc_hvc_m:.3f}",
+        f"同精度 ≈ {acc_list[best_idx]:.2f}\nBC: {bc_list[best_idx]:.3f} vs {bc_hvc_m:.3f}",
         xy=(acc_list[best_idx], bc_list[best_idx]),
         xytext=(acc_list[best_idx] + 0.03, bc_list[best_idx] + 0.005),
         fontsize=8, color="navy",
         arrowprops=dict(arrowstyle="->", color="navy"),
     )
 
-    plt.colorbar(sc, ax=ax, label="Noise level σ")
+    plt.colorbar(sc, ax=ax, label="ノイズ強度 σ")
     ax.axhline(1.0, color="gray", linestyle=":", linewidth=1, alpha=0.5)
-    ax.set_xlabel("Top-1 Identification Accuracy")
-    ax.set_ylabel("BC (Degree of Brain Control)")
-    ax.set_title("Same Accuracy, Different BC?\n(V1+noise trajectory vs HVC)")
+    ax.set_xlabel("Top-1 識別精度")
+    ax.set_ylabel("BC（脳制御度）")
+    ax.set_title("同精度・異BC の実証\n（V1+ノイズ軌跡 vs HVC）")
     ax.legend(fontsize=8)
 
     plt.suptitle(
-        "Exp16: Same Accuracy, Different BC — V1 noise injection vs HVC\n"
-        "BC captures signal quality beyond categorical accuracy",
+        "Exp16: 同精度・異BC — V1 ノイズ注入 vs HVC\n"
+        "BC は識別精度では捉えられないシグナル構造の劣化を検出する",
         fontsize=11
     )
     plt.tight_layout()
@@ -318,6 +361,11 @@ def main():
         bc_hvc=np.array([bc_hvc_m]),
         bc_hvc_std=np.array([bc_hvc_s]),
         acc_hvc=np.array([acc_hvc]),
+        cohens_d=np.array([cohens_d]),
+        mean_diff=np.array([mean_diff]),
+        ci_low=np.array([ci_low]),
+        ci_high=np.array([ci_high]),
+        p_val=np.array([p_val]),
     )
     print("完了!")
 
