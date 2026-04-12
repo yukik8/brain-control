@@ -87,7 +87,7 @@ def analyze_residuals(results):
     ax.set_xticklabels(ALL_LAYERS, fontsize=9)
     ax.axhline(0, color="gray", lw=0.8, ls="--")
     ax.set_ylabel("Residual (BC - predicted)")
-    ax.set_title("残差の分布（層別）")
+    ax.set_title("Residual distribution by layer")
 
     # (2) 残差の分布（ROI別）
     ax = axes[0, 1]
@@ -105,7 +105,7 @@ def analyze_residuals(results):
     ax.set_xticklabels([roi_short[r] for r in ALL_ROIS], fontsize=9)
     ax.axhline(0, color="gray", lw=0.8, ls="--")
     ax.set_ylabel("Residual (BC - predicted)")
-    ax.set_title("残差の分布（ROI別）")
+    ax.set_title("Residual distribution by ROI")
 
     # (3) 層 × ROI の残差ヒートマップ
     ax = axes[1, 0]
@@ -124,7 +124,7 @@ def analyze_residuals(results):
     ax.set_yticks(range(len(ALL_LAYERS)))
     ax.set_yticklabels(ALL_LAYERS, fontsize=9)
     plt.colorbar(im, ax=ax, label="Mean residual")
-    ax.set_title("残差ヒートマップ（層 × ROI, 被験者平均）")
+    ax.set_title("Residual heatmap (layer x ROI, averaged over subjects)")
 
     # (4) BC vs mean_r（残差を色で表現）
     ax = axes[1, 1]
@@ -137,7 +137,7 @@ def analyze_residuals(results):
     ax.axhline(1.0, color="gray", lw=0.8, ls="--")
     ax.set_xlabel("Decoding accuracy (mean_r)")
     ax.set_ylabel("BC")
-    ax.set_title("BC vs mean_r（残差を色でエンコード）")
+    ax.set_title("BC vs mean_r (residual color-encoded)")
     ax.legend(fontsize=8)
 
     fig.tight_layout()

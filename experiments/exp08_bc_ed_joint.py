@@ -90,7 +90,7 @@ def plot_bc_ed(results):
     ax.axhline(1.0, color="gray", lw=0.8, ls="--")
     ax.set_xlabel("Effective Dimensionality (ED)")
     ax.set_ylabel("BC")
-    ax.set_title("BC × ED  (Subject1, all ROIs × all layers)")
+    ax.set_title("BC x ED  (Subject1, all ROIs x all layers)")
 
     # ── (2) 層ごとの BC・ED 平均軌跡 ──
     ax = axes[1]
@@ -109,7 +109,7 @@ def plot_bc_ed(results):
     ax.axhline(1.0, color="gray", lw=0.8, ls="--")
     ax.set_xlabel("Mean ED (averaged over ROIs)")
     ax.set_ylabel("Mean BC (averaged over ROIs)")
-    ax.set_title("Layer trajectory in BC × ED space\n(Subject1, ROI-averaged)")
+    ax.set_title("Layer trajectory in BC x ED space\n(Subject1, ROI-averaged)")
 
     fig.tight_layout()
     fig.savefig("outputs/bc_ed_joint.png", dpi=150, bbox_inches="tight")

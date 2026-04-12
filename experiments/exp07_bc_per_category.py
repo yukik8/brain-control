@@ -194,7 +194,7 @@ def main():
     ax.axvline(np.mean(bc_s), color="black", lw=1, ls="--", label=f"mean={np.mean(bc_s):.3f}")
     ax.axvline(1.0, color="gray", lw=0.8, ls=":")
     ax.set_xlabel("BC (other-category broken)")
-    ax.set_title("案1: BC per category\n(broken = other-category sampling)")
+    ax.set_title("Alt: BC per category\n(broken = other-category sampling)")
     ax.legend(fontsize=8)
     ax.invert_yaxis()
 
@@ -212,7 +212,7 @@ def main():
     ax.axhline(1.0, color="gray", lw=0.8, ls="--")
     ax.set_xlabel("Var(preserved)")
     ax.set_ylabel("BC (other-category)")
-    ax.set_title("案1: BC(other) vs Var(preserved)")
+    ax.set_title("Alt: BC(other) vs Var(preserved)")
     ax.legend(fontsize=8)
 
     # (3) BC(across) vs BC(other) 比較
@@ -225,8 +225,8 @@ def main():
     slope2, intercept2, r2, p2, _ = stats.linregress(bc_across_arr, bc_other_arr)
     x2 = np.linspace(bc_across_arr.min(), bc_across_arr.max(), 100)
     ax.plot(x2, slope2 * x2 + intercept2, "r-", lw=1.5, label=f"r={r2:.3f}")
-    ax.set_xlabel("BC (across-shuffle, 旧)")
-    ax.set_ylabel("BC (other-category, 案1)")
+    ax.set_xlabel("BC (across-shuffle, original)")
+    ax.set_ylabel("BC (other-category, alt)")
     ax.set_title("across vs other-category BC")
     ax.legend(fontsize=8)
 
