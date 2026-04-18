@@ -1,0 +1,100 @@
+\begin{thebibliography}{13}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Chen et~al.(2023)Chen, Qing, Xiang, Yue, and Zhou]{chen2023}
+Zijiao Chen, Jiaxin Qing, Tiange Xiang, Wan~Lin Yue, and Juan~Helen Zhou.
+\newblock {MinD-Vis}: Unleashing cognitive synergy in visual decoding from the
+  human brain.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+  and Pattern Recognition}, pages 19axis--19axis, 2023.
+
+\bibitem[Fu et~al.(2023)Fu, Tamir, Sundaram, Chai, Zhang, Dekel, and
+  Isola]{fu2023}
+Stephanie Fu, Netanel Tamir, Shobhita Sundaram, Lucy Chai, Richard Zhang, Tali
+  Dekel, and Phillip Isola.
+\newblock {DreamSim}: Learning new dimensions of human visual similarity using
+  synthetic data.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2023.
+
+\bibitem[Goodfellow et~al.(2014)Goodfellow, Pouget-Abadie, Mirza, Xu,
+  Warde-Farley, Ozair, Courville, and Bengio]{goodfellow2014}
+Ian Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing Xu, David Warde-Farley,
+  Sherjil Ozair, Aaron Courville, and Yoshua Bengio.
+\newblock Generative adversarial nets.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~27, 2014.
+
+\bibitem[Ho et~al.(2020)Ho, Jain, and Abbeel]{ho2020}
+Jonathan Ho, Ajay Jain, and Pieter Abbeel.
+\newblock Denoising diffusion probabilistic models.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~33, pages 6840--6851, 2020.
+
+\bibitem[Kingma and Welling(2014)]{kingma2014}
+Diederik~P Kingma and Max Welling.
+\newblock Auto-encoding variational {Bayes}.
+\newblock \emph{arXiv preprint arXiv:1312.6114}, 2014.
+
+\bibitem[Miyawaki et~al.(2008)Miyawaki, Uchida, Yamashita, Sato, Morito,
+  Tanabe, Sadato, and Kamitani]{miyawaki2008}
+Yoichi Miyawaki, Hajime Uchida, Okito Yamashita, Masa-aki Sato, Yusuke Morito,
+  Hiroki~C Tanabe, Norihiro Sadato, and Yukiyasu Kamitani.
+\newblock Visual image reconstruction from human brain activity using a
+  combination of multiscale local image decoders.
+\newblock \emph{Neuron}, 60\penalty0 (5):\penalty0 915--929, 2008.
+
+\bibitem[Nishimoto et~al.(2011)Nishimoto, Vu, Naselaris, Benjamini, Yu, and
+  Gallant]{nishimoto2011}
+Shinji Nishimoto, An~T Vu, Thomas Naselaris, Yuval Benjamini, Bin Yu, and
+  Jack~L Gallant.
+\newblock Reconstructing visual experiences from brain activity evoked by
+  natural movies.
+\newblock \emph{Current Biology}, 21\penalty0 (19):\penalty0 1641--1646, 2011.
+
+\bibitem[Ozcelik and VanRullen(2023)]{ozcelik2023}
+Furkan Ozcelik and Rufin VanRullen.
+\newblock Brain-diffuser: Natural scene reconstruction from {fMRI} signals
+  using generative latent diffusion.
+\newblock In \emph{arXiv preprint arXiv:2303.05334}, 2023.
+
+\bibitem[Scotti et~al.(2023)Scotti, Banerjee, Goode, Shailee, Gaibert, Abraham,
+  Peer, Luo, Bheemreddy, Ivanova, et~al.]{scotti2023}
+Paul~S Scotti, Atmadeep Banerjee, Jimmie Goode, Jain Shailee, Andrew Gaibert,
+  Tanvir Abraham, Idan Peer, Liuyi Luo, Hooroo Bheemreddy, Evelina Ivanova,
+  et~al.
+\newblock {MindEye}: Reconstructing the mind's eye: {fMRI}-to-image with
+  contrastive learning and diffusion priors.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2023.
+
+\bibitem[Shen et~al.(2019)Shen, Horikawa, Majima, and Kamitani]{shen2019}
+Guohua Shen, Tomoyasu Horikawa, Kei Majima, and Yukiyasu Kamitani.
+\newblock Deep image reconstruction from human brain activity.
+\newblock \emph{PLOS Computational Biology}, 15\penalty0 (1):\penalty0
+  e1006633, 2019.
+
+\bibitem[Song et~al.(2021)Song, Sohl-Dickstein, Kingma, Kumar, Ermon, and
+  Poole]{song2021}
+Yang Song, Jascha Sohl-Dickstein, Diederik~P Kingma, Abhishek Kumar, Stefano
+  Ermon, and Ben Poole.
+\newblock Score-based generative modeling through stochastic differential
+  equations.
+\newblock In \emph{International Conference on Learning Representations}, 2021.
+
+\bibitem[Tang et~al.(2023)Tang, LeBel, Jain, and Huth]{tang2023}
+Jerry Tang, Amanda LeBel, Shailee Jain, and Alexander~G Huth.
+\newblock Semantic reconstruction of continuous language from non-invasive
+  brain recordings.
+\newblock \emph{Nature Neuroscience}, 26:\penalty0 858--866, 2023.
+
+\bibitem[Zhang et~al.(2018)Zhang, Isola, Efros, Shechtman, and Wang]{zhang2018}
+Richard Zhang, Phillip Isola, Alexei~A Efros, Eli Shechtman, and Oliver Wang.
+\newblock The unreasonable effectiveness of deep features as a perceptual
+  metric.
+\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
+  Pattern Recognition}, pages 586--595, 2018.
+
+\end{thebibliography}

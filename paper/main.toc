@@ -1,0 +1,22 @@
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
+\contentsline {section}{\numberline {2}Related Work}{4}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Brain-to-Image Reconstruction}{4}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Evaluation Metrics for Brain Decoding}{4}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Role of Generative Priors}{5}{subsection.2.3}%
+\contentsline {section}{\numberline {3}Method: Degree of Brain Control}{5}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Problem Setup}{5}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Definition}{5}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Interpretation}{6}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Relationship to Identification Accuracy}{6}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}Computation}{6}{subsection.3.5}%
+\contentsline {section}{\numberline {4}Experiments}{7}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Setup}{7}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Experiment 1: Prior-Dominated Baseline}{7}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Experiment 2: BC vs.\ Identification Accuracy}{8}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Experiment 3: Image-Space Brain Control (Phase 2 BC)}{9}{subsection.4.4}%
+\contentsline {section}{\numberline {5}Discussion}{10}{section.5}%
+\contentsline {subsection}{\numberline {5.1}What BC Measures---and What It Does Not}{10}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Implications for Diffusion-Based Reconstruction}{11}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}BC Beyond the Feature Decoder}{11}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Limitations}{12}{subsection.5.4}%
+\contentsline {section}{\numberline {6}Conclusion}{12}{section.6}%

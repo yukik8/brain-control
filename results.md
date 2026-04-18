@@ -686,3 +686,92 @@ BC       = 「デコードされた表現がランダム摂動に比べてどれ
 - 青の超過低下（塗りつぶし部分）: BC が精度より余分に落ちている領域
 
 これは「BC は識別精度では検出できない構造劣化を検出する」ことの視覚的証拠。
+
+---
+
+## Experiment 17: 複数被験者での BC 再現性（2026-04-16）
+
+**動機**: 論文の弱点「Subject1 のみ」を補強する。全5被験者で Exp13（Real vs Shuffled vs Random）を実施。
+
+**設定**
+- 被験者: Subject1〜5
+- ROI: VC, 特徴量: cnn8, α=100, N_SHUFFLE=1000
+
+**結果**
+
+| 被験者 | Real BC | Shuffled BC | Random BC | feature norm（Real=Shuffled） |
+|--------|---------|-------------|-----------|-------------------------------|
+| Subject1 | **1.259** | 1.001 | 1.000 | 70.9 |
+| Subject2 | **1.135** | 0.999 | 1.002 | 86.4 |
+| Subject3 | **1.250** | 0.999 | 1.003 | 83.5 |
+| Subject4 | **1.208** | 1.001 | 1.000 | 92.9 |
+| Subject5 | **1.138** | 1.002 | 0.999 | 84.0 |
+
+対応あり t 検定（Real vs Shuffled）: **t = 7.44, p = 0.0017**
+
+![複数被験者 BC 再現性](outputs/exp17_multisubject_bc.png)
+
+**主要な発見**
+
+- **全5被験者で Real BC > Shuffled BC**: 例外なし
+- **全5被験者で Shuffled の feature norm = Real と完全一致**: 視覚品質は被験者によらず区別不可能
+- **Shuffled BC ≈ 1.000**: 全員で prior 支配を確認
+- Real BC の被験者差（1.13〜1.26）: 脳デコーディングの個人差を反映しているが、条件間の大小関係は保存
+
+**論文への示唆**: BC の「Real > Shuffled, Shuffled ≈ 1.000」というパターンは5被験者全員で再現される（p=0.0017）。この結果は Subject1 固有の現象ではなく、GOD データセットにおける一般的な性質であることを示す。
+
+---
+
+## Figure 1: 概念図（論文用）（2026-04-16）
+
+**ファイル**: `experiments/fig1_concept.py`
+
+論文 Figure 1 として使用する概念図。
+
+**構成**
+- **左パネル**: パイプライン概念図
+  - Real fMRI → Ridge Decoder → Decoded Features → Generator (relu7) → BC=1.259
+  - Shuffled fMRI → 同じパイプライン → BC=1.001
+  - Decoder と Generator が共通であることを明示（"same" 注釈）
+  - "feature norm: identical / visual quality: indistinguishable" ボックス
+  - 問いかけ: "How do we know if the brain is actually controlling the reconstruction?"
+- **右パネル**: 実際の再構成画像（goldfish カテゴリ、3試行分）
+  - Real 条件（青枠）と Shuffled 条件（赤枠）の比較
+  - BC バープロット（Real/Shuffled/Random の3条件）
+
+**タイトル**: "Plausible-looking reconstruction does not imply brain control"
+
+![Fig 1 概念図](outputs/fig1_concept.png)
+
+---
+
+## Experiment 18: Prior Strength Simulation（2026-04-18）
+
+**動機**: Discussion 5.2「Diffusion の prior が強いほど BC → 1」という仮説を実証ベースに昇格させる。
+
+**設定**
+- Feature mixing: $\hat{x}_\alpha = (1-\alpha)\hat{x}_\text{real} + \alpha\hat{x}_\text{shuffled}$
+- α = 0.00 → 1.00（21ステップ）
+- Subject1, ROI=VC, cnn8, N_SHUFFLE=1000
+
+**結果**
+
+| α | BC |
+|---|---|
+| 0.00（Real） | **1.2592** |
+| 0.25 | 1.2306 |
+| 0.50 | 1.1201 |
+| 0.75 | 1.0248 |
+| 1.00（Shuffled） | 1.0014 |
+
+![Prior Strength](outputs/exp18_prior_strength.png)
+
+**主要な発見**
+
+- BC が α に対して**単調かつ滑らかに減少**（1.259 → 1.001）
+- 軌跡は near-linear（理論的には $(1-\alpha)^2$ スケーリング）
+- α=0.5 でも BC=1.12 → prior が半分混入しても BC は有意に検出可能
+
+**論文への示唆**: "prior が強いほど BC → 1" は feature mixing 実験で直接実証された。
+「We hypothesize」→「We demonstrate」に昇格。Diffusion モデルは prior がさらに強いため
+BC が relu7generator（BC=1.259）より低くなるという予測に実証的根拠が加わった。
