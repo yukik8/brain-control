@@ -182,8 +182,6 @@ python experiments/exp15_roi_bc_vs_accuracy.py
 
 ## Using BC on Your Own Decoding Results
 
-## Using BC on Your Own Decoding Results
-
 ```python
 from compute_bc import compute_bc
 
