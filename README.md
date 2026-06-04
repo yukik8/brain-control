@@ -156,30 +156,53 @@ how strongly brain activity constrains the reconstruction process.
 
 ### Installation
 
-bash pip install numpy scipy scikit-learn matplotlib pillow h5py 
+```bash
+pip install numpy scipy scikit-learn matplotlib pillow h5py
+```
 
 ### Main Experiment
 
-bash python experiments/exp13_prior_vs_brain.py 
+```bash
+python experiments/exp13_prior_vs_brain.py
+```
 
 ### Multi-Subject Replication
 
-bash python experiments/exp17_multisubject_bc.py 
+```bash
+python experiments/exp17_multisubject_bc.py
+```
 
 ### ROI Analysis
 
-bash python experiments/exp15_roi_bc_vs_accuracy.py 
+```bash
+python experiments/exp15_roi_bc_vs_accuracy.py
+```
 
 ---
 
 ## Using BC on Your Own Decoding Results
 
-python from compute_bc import compute_bc  bc_mean, bc_sem, bc_per_cat = compute_bc(     pred_features,     cat_labels,     n_shuffle=1000,     seed=42,     mode="across" )  print(f"BC = {bc_mean:.4f} ± {bc_sem:.4f}") 
+## Using BC on Your Own Decoding Results
+
+```python
+from compute_bc import compute_bc
+
+bc_mean, bc_sem, bc_per_cat = compute_bc(
+    pred_features,
+    cat_labels,
+    n_shuffle=1000,
+    seed=42,
+    mode="across"
+)
+
+print(f"BC = {bc_mean:.4f} ± {bc_sem:.4f}")
+```
 
 Interpretation:
-
-text BC ≈ 1.0   → Prior-dominated reconstruction BC > 1.0   → Brain-driven reconstruction 
-
+```text
+BC ≈ 1.0   → Prior-dominated reconstruction
+BC > 1.0   → Brain-driven reconstruction
+```
 ---
 
 ## Citation
