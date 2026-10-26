@@ -153,7 +153,7 @@ Let $SS_W$, $SS_B$ and $SS_T = SS_W + SS_B$ denote the within-category, between-
 
 $$\mathrm{BC} = \frac{N-C}{N-1}\cdot\frac{SS_T}{SS_W} = 1 + \frac{C-1}{N-1}\,(F-1), \qquad F = \frac{SS_B/(C-1)}{SS_W/(N-C)}$$
 
-$F$ is the one-way ANOVA $F$ statistic computed on traces, which equals the Calinski–Harabasz index of the decoded features with categories as clusters. BC therefore carries the same information as $F$; permutations are needed only for a $p$-value. The two differ in scale. For a fixed ratio of between- to within-category variance, $F$ grows roughly in proportion to $n$, whereas $\mathrm{BC} \to 1 + \operatorname{tr}\Sigma_B / \operatorname{tr}\Sigma_W$ as $n \to \infty$ and does not depend on $n$. BC relates to $F$ as an effect size relates to its test statistic; we verify this empirically in Section 4.5.
+$F$ is the one-way ANOVA $F$ statistic computed on traces, which equals the Calinski–Harabasz index of the decoded features with categories as clusters. BC therefore carries the same information as $F$; permutations are needed only for a $p$-value. The two differ in scale. For a fixed ratio of between- to within-category variance, $F$ grows roughly in proportion to $n$, whereas $\mathrm{BC} \to 1 + \mathrm{tr}\,\Sigma_B / \mathrm{tr}\,\Sigma_W$ as $n \to \infty$ and does not depend on $n$. BC relates to $F$ as an effect size relates to its test statistic; we verify this empirically in Section 4.5.
 
 #### 3.5 Relationship to Identification Accuracy
 
@@ -161,7 +161,7 @@ Identification accuracy (e.g., leave-one-out cosine similarity ranking) is a com
 
 $$\mathrm{BC} \approx 1 + \mathrm{SNR}_\text{eff}$$
 
-where $\mathrm{SNR}_\text{eff} = \operatorname{tr}\Sigma_B / \operatorname{tr}\Sigma_W$ is the ratio of between- to within-category variance in feature space (Section 3.4). This means BC continues to grow in regimes where accuracy has already saturated, enabling detection of structural differences that accuracy cannot resolve. We demonstrate this empirically in Section 4.3.
+where $\mathrm{SNR}_\text{eff} = \mathrm{tr}\,\Sigma_B / \mathrm{tr}\,\Sigma_W$ is the ratio of between- to within-category variance in feature space (Section 3.4). This means BC continues to grow in regimes where accuracy has already saturated, enabling detection of structural differences that accuracy cannot resolve. We demonstrate this empirically in Section 4.3.
 
 #### 3.6 Computation
 
