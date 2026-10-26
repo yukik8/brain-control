@@ -76,10 +76,11 @@ def main():
     ax.axhline(acc_hvc_norm, color="tomato", linestyle=":", linewidth=1.5, alpha=0.6,
                label="HVC Accuracy (no noise)")
 
-    idx_075 = list(noise_levels).index(0.75)
+    match_sigma = float(data["match_sigma"])
+    idx_match = int(np.argmin(np.abs(noise_levels - match_sigma)))
     ax.annotate(
-        f"Same Acc (s=0.75)\nBC diff d={cohens_d:.2f}, p={p_val:.3f}",
-        xy=(noise_levels[idx_075], bc_norm[idx_075]),
+        f"Same Acc (s={match_sigma:g})\nBC diff d={cohens_d:.2f}, p={p_val:.3f}",
+        xy=(noise_levels[idx_match], bc_norm[idx_match]),
         xytext=(1.5, 0.35),
         fontsize=9, color="navy",
         arrowprops=dict(arrowstyle="->", color="navy", lw=1.5),

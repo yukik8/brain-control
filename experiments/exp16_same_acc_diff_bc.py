@@ -137,7 +137,7 @@ def prepare_decoder(roi_key, feat_train_valid, train_ids_valid):
     matched_brain, matched_feat = [], []
     for j, sid in enumerate(stim_train):
         best = min(id_to_feat.keys(), key=lambda x: abs(x - sid), default=None)
-        if best is not None and abs(best - sid) < 0.001:
+        if best is not None and abs(best - sid) < 1e-7:  # 小数部6桁が画像番号なので、隣の画像（差 1e-6）と区別できる許容誤差で照合
             matched_brain.append(brain_train[j])
             matched_feat.append(id_to_feat[best])
 
@@ -198,6 +198,7 @@ def main():
     bc_list  = []
     std_list = []
     acc_list = []
+    bc_cats_list = []  # カテゴリ別BC（Cohen's d 計算用）
 
     for sigma in NOISE_LEVELS:
         # 標準化済みのテスト脳活動にノイズを加える
@@ -218,9 +219,7 @@ def main():
         bc_list.append(bc_m)
         std_list.append(bc_s)
         acc_list.append(acc)
-        # カテゴリ別BC配列も保持（Cohen's d 計算用）
-        if sigma == 0.75:
-            bc_per_cat_v1_sigma075 = bc_cats
+        bc_cats_list.append(bc_cats)
         print(f"{sigma:>8.2f} {bc_m:>8.4f} {bc_s:>7.4f} {acc:>7.3f}")
 
     # ── HVC ベースラインの計算 ──
@@ -246,10 +245,11 @@ def main():
     print(f"精度差: {acc_diffs[best_idx]:.3f},  BC差: {bc_list[best_idx] - bc_hvc_m:.4f}")
 
     # ── Cohen's d と 95% CI の計算 ──
-    # V1+noise(σ=0.75) と HVC の カテゴリ別BC を比較
+    # 精度マッチした V1+noise と HVC の カテゴリ別BC を比較
+    match_sigma = NOISE_LEVELS[best_idx]
     from scipy import stats as scipy_stats
 
-    a = bc_per_cat_v1_sigma075  # V1+noise σ=0.75 のカテゴリ別BC
+    a = bc_cats_list[best_idx]  # 精度マッチした V1+noise のカテゴリ別BC
     b = bc_per_cat_hvc           # HVC のカテゴリ別BC
     n_a, n_b = len(a), len(b)
 
@@ -271,7 +271,7 @@ def main():
     ci_high   = mean_diff + t_crit * se_diff
 
     print(f"\n=== 効果量・信頼区間 ===")
-    print(f"対象: V1+noise(σ=0.75) vs HVC（精度が最も近いペア）")
+    print(f"対象: V1+noise(σ={match_sigma:.2f}) vs HVC（精度が最も近いペア）")
     print(f"  平均BC差: {mean_diff:+.4f}  （HVC − V1+noise）")
     print(f"  95% CI:  [{ci_low:.4f}, {ci_high:.4f}]")
     print(f"  Cohen's d: {cohens_d:.3f}")
@@ -357,6 +357,7 @@ def main():
         bc_hvc=np.array([bc_hvc_m]),
         bc_hvc_std=np.array([bc_hvc_s]),
         acc_hvc=np.array([acc_hvc]),
+        match_sigma=np.array([match_sigma]),
         cohens_d=np.array([cohens_d]),
         mean_diff=np.array([mean_diff]),
         ci_low=np.array([ci_low]),

@@ -4,11 +4,11 @@ fig4_noise_sensitivity.py
 論文 Figure 4: BC vs 識別精度のノイズ感度カーブ（論文品質）
 
 左パネル: V1+noise における BC と accuracy の推移（正規化）
-右パネル: σ=0.75 で精度マッチした V1+noise vs HVC の BC 比較
+右パネル: 精度マッチした V1+noise vs HVC の BC 比較（σ は Exp16 の npz から読む）
 
 キーメッセージ:
   - BC は精度より敏感にノイズ劣化を反映する
-  - 精度が同じでも BC は有意に異なる（Cohen's d=0.465, p=0.023）
+  - 精度が同じでも BC が異なるか（Cohen's d, p は Exp16 の npz から読む）
 """
 
 import sys, os
@@ -39,8 +39,8 @@ def main():
     ci_high       = float(d["ci_high"])
     p_val         = float(d["p_val"])
 
-    # σ=0.75 のインデックス（精度マッチポイント）
-    target_sigma  = 0.75
+    # 精度マッチポイント（Exp16 で HVC の精度に最も近かった σ）
+    target_sigma  = float(d["match_sigma"])
     match_idx     = np.argmin(np.abs(noise_levels - target_sigma))
 
     bc_match  = bc_curve[match_idx]
@@ -119,16 +119,16 @@ def main():
                   yerr=bc_errs, capsize=5,
                   error_kw=dict(elinewidth=1.2, ecolor="#333333"))
 
-    for bar, val, acc in zip(bars, bc_vals, acc_vals):
+    for bar, val, err, acc in zip(bars, bc_vals, bc_errs, acc_vals):
         ax.text(bar.get_x() + bar.get_width() / 2,
-                val + bc_errs[0] + 0.002,
+                val + err + 0.002,
                 f"BC={val:.3f}",
                 ha="center", va="bottom", fontsize=9, fontweight="bold",
                 color=bar.get_facecolor())
         ax.text(bar.get_x() + bar.get_width() / 2,
                 0.965,
                 f"acc={acc:.3f}",
-                ha="center", va="bottom", fontsize=8, color="#555555")
+                ha="center", va="bottom", fontsize=8, color="white")
 
     # Cohen's d アノテーション
     y_bracket = max(bc_vals) + max(bc_errs) + 0.010
@@ -144,7 +144,7 @@ def main():
 
     ax.set_ylabel("BC (Degree of Brain Control)", fontsize=10)
     ax.set_ylim(0.960, y_bracket + 0.045)
-    ax.set_title("(B)  Same accuracy, different BC\n(matched at identification accuracy ≈ 0.17)",
+    ax.set_title(f"(B)  Same accuracy, different BC\n(matched at identification accuracy ≈ {acc_hvc:.2f})",
                  fontsize=10, fontweight="bold", pad=7)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)

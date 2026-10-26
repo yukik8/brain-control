@@ -1,9 +1,16 @@
-\begin{thebibliography}{13}
+\begin{thebibliography}{15}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Cali{\'n}ski and Harabasz(1974)]{calinski1974}
+Tadeusz Cali{\'n}ski and Jerzy Harabasz.
+\newblock A dendrite method for cluster analysis.
+\newblock \emph{Communications in Statistics}, 3\penalty0 (1):\penalty0 1--27,
+  1974.
+\newblock \doi{10.1080/03610927408827101}.
 
 \bibitem[Chen et~al.(2023)Chen, Qing, Xiang, Yue, and Zhou]{chen2023}
 Zijiao Chen, Jiaxin Qing, Tiange Xiang, Wan~Lin Yue, and Juan~Helen Zhou.
@@ -33,6 +40,13 @@ Jonathan Ho, Ajay Jain, and Pieter Abbeel.
 \newblock Denoising diffusion probabilistic models.
 \newblock In \emph{Advances in Neural Information Processing Systems},
   volume~33, pages 6840--6851, 2020.
+
+\bibitem[Horikawa and Kamitani(2017)]{horikawa2017}
+Tomoyasu Horikawa and Yukiyasu Kamitani.
+\newblock Generic decoding of seen and imagined objects using hierarchical
+  visual features.
+\newblock \emph{Nature Communications}, 8:\penalty0 15037, 2017.
+\newblock \doi{10.1038/ncomms15037}.
 
 \bibitem[Kingma and Welling(2014)]{kingma2014}
 Diederik~P Kingma and Max Welling.

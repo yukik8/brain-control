@@ -211,7 +211,7 @@ def run_roi(roi_key, feat_train, feat_test, stim_id_train, cat_test):
     matched_feat  = []
     for j, sid in enumerate(stim_train):
         best = min(id_to_feat.keys(), key=lambda x: abs(x - sid), default=None)
-        if best is not None and abs(best - sid) < 0.001:
+        if best is not None and abs(best - sid) < 1e-7:  # 小数部6桁が画像番号なので、隣の画像（差 1e-6）と区別できる許容誤差で照合
             matched_brain.append(brain_train[j])
             matched_feat.append(id_to_feat[best])
 

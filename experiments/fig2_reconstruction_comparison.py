@@ -66,10 +66,11 @@ def main():
     img_w    = 1.35  # 1画像の幅
     sep_w    = 0.25  # カテゴリ間スペーサー
     img_h    = 1.35  # 1画像の高さ
+    title_h  = 0.35  # 全体注釈（サブタイトル）行の高さ
     header_h = 0.50  # カテゴリラベル行の高さ
 
     total_w = label_w + n_cats * (N_REPS * img_w + sep_w)
-    total_h = header_h + n_conds * img_h + 0.6  # 下マージン
+    total_h = title_h + header_h + n_conds * img_h + 0.6  # 下マージン
 
     fig = plt.figure(figsize=(total_w, total_h), facecolor="white")
 
@@ -84,7 +85,7 @@ def main():
     for ci, cat in enumerate(CATEGORIES):
         x_block_start = label_w + ci * (N_REPS * img_w + sep_w)
         x_center = x_block_start + N_REPS * img_w / 2
-        y_top = total_h - header_h * 0.5
+        y_top = total_h - title_h - header_h * 0.5
         fig.text(fx(x_center), fy(y_top),
                  f'"{cat}"',
                  ha="center", va="center",
@@ -92,7 +93,7 @@ def main():
 
     # ── 画像グリッド ──
     for ri, (cond_name, subdir, bc_val, edge_color, bg_color) in enumerate(CONDITIONS):
-        y_img_bottom = total_h - header_h - (ri + 1) * img_h + 0.05
+        y_img_bottom = total_h - title_h - header_h - (ri + 1) * img_h + 0.05
         recon_dir = os.path.join(RECON_BASE, subdir, "Subject1", "VC")
 
         # 条件ラベルパネル（左端）
@@ -136,7 +137,7 @@ def main():
     for ci in range(1, n_cats):
         x_sep = label_w + ci * (N_REPS * img_w + sep_w) - sep_w / 2
         line = plt.Line2D([fx(x_sep), fx(x_sep)],
-                          [fy(0.3), fy(total_h - 0.15)],
+                          [fy(0.3), fy(total_h - title_h - 0.05)],
                           transform=fig.transFigure,
                           color="#cccccc", linewidth=0.8, linestyle="--")
         fig.add_artist(line)

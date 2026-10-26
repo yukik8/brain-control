@@ -151,7 +151,7 @@ def main():
     for idx, sid in enumerate(stim_train):
         # 最近傍 ImageID を探す（浮動小数点の誤差に対応）
         best = min(id_to_feat.keys(), key=lambda x: abs(x - sid), default=None)
-        if best is not None and abs(best - sid) < 0.001:
+        if best is not None and abs(best - sid) < 1e-7:  # 小数部6桁が画像番号なので、隣の画像（差 1e-6）と区別できる許容誤差で照合
             matched.append((idx, best))
         else:
             skipped.append(sid)

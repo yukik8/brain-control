@@ -3,7 +3,7 @@ fig5_bc_vs_accuracy.py
 -----------------------
 論文 Figure 5: BC vs 識別精度の散布図（ROI別）+ 精度マッチの強調
 
-左パネル: 全 ROI の BC vs accuracy 散布図（r=0.967）
+左パネル: 全 ROI の BC vs accuracy 散布図
 右パネル: V1+noise と HVC の精度マッチ箇所を拡大表示
 
 キーメッセージ:
@@ -45,8 +45,9 @@ def main():
     cohens_d     = float(d16["cohens_d"])
     p_match      = float(d16["p_val"])
 
-    # σ=0.75 のインデックス
-    match_idx   = np.argmin(np.abs(noise_levels - 0.75))
+    # 精度マッチポイント（Exp16 で HVC の精度に最も近かった σ）
+    match_sigma = float(d16["match_sigma"])
+    match_idx   = np.argmin(np.abs(noise_levels - match_sigma))
     bc_match    = float(bc_noise[match_idx])
     acc_match   = float(acc_noise[match_idx])
 
@@ -112,10 +113,10 @@ def main():
                 xytext=(acc_noise[-1] + 0.01, bc_noise[-1] - 0.004),
                 fontsize=7.5, color="#2c7bb6")
 
-    # マッチポイント（σ=0.75）を強調
+    # マッチポイントを強調
     ax.scatter([acc_match], [bc_match], color="#2c7bb6",
                s=120, zorder=5, edgecolors="white", linewidths=1.5,
-               label=f"V1+noise ($\\sigma$=0.75): BC={bc_match:.3f}")
+               label=f"V1+noise ($\\sigma$={match_sigma:g}): BC={bc_match:.3f}")
 
     # HVC
     ax.scatter([acc_hvc], [bc_hvc], color="#555555",
