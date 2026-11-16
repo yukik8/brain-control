@@ -1,4 +1,4 @@
-\begin{thebibliography}{22}
+\begin{thebibliography}{23}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -157,6 +157,16 @@ Ken Shirakawa, Yoshihiro Nagano, Misato Tanaka, Shuntaro~C. Aoki, Yusuke
 \newblock Spurious reconstruction from brain activity.
 \newblock \emph{Neural Networks}, 190:\penalty0 107515, 2025.
 \newblock \doi{10.1016/j.neunet.2025.107515}.
+
+\bibitem[Shou et~al.(2013)Shou, Eloyan, Lee, Zipunnikov, Crainiceanu, Nebel,
+  Caffo, Lindquist, and Crainiceanu]{shou2013}
+H.~Shou, A.~Eloyan, S.~Lee, V.~Zipunnikov, A.~N. Crainiceanu, M.~B. Nebel,
+  B.~Caffo, M.~A. Lindquist, and C.~M. Crainiceanu.
+\newblock Quantifying the reliability of image replication studies: The image
+  intraclass correlation coefficient ({I2C2}).
+\newblock \emph{Cognitive, Affective, \& Behavioral Neuroscience}, 13\penalty0
+  (4):\penalty0 714--724, 2013.
+\newblock \doi{10.3758/s13415-013-0196-0}.
 
 \bibitem[Shrout and Fleiss(1979)]{shrout1979}
 Patrick~E. Shrout and Joseph~L. Fleiss.

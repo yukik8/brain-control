@@ -1,17 +1,17 @@
-# How Much of a Brain Reconstruction Comes from the Brain?
+# Stimulus-Specific Reliability and Sampling Variability
 
-### Measuring Brain Control in Single-Trial fMRI-to-Image Decoding
+### in Single-Trial fMRI-to-Image Decoding
 
 **Paper:** [PDF](paper/main.pdf) · [LaTeX source](paper/main.tex) · arXiv: coming soon
 
 Brain-to-image decoders combine brain-derived features with strong generative priors and random sampling. A realistic reconstruction therefore does not show, by itself, how much of it was determined by brain activity.
 
-This repository introduces the Degree of Brain Control (BC). BC measures how consistently a decoder turns repeated presentations of the same stimulus into the same output, on a calibrated scale where BC = 1 means the output carries no stimulus information.
+This repository introduces the Degree of Brain Control (BC). BC measures how consistently a decoder turns repeated presentations of the same stimulus into the same output, on a calibrated scale where BC = 1 when the output carries no stimulus information. It is a multivariate reliability measure, an exact transform of the image intraclass correlation coefficient (I2C2; [Shou et al., 2013](https://doi.org/10.3758/s13415-013-0196-0)). BC shows whether stimulus-specific structure reaches the output; it does not show how much of an image comes from the brain rather than from the generative prior.
 
 Key findings:
 
 - **GOD (controlled inputs).** BC separates real from shuffled fMRI input (1.259 vs. 1.001, Subject 1), although the decoded features have identical norms and the reconstructions look equally plausible.
-- **NSD (current decoders).** Single-trial reconstructions of MindEye2, MindEye1 and Brain-Diffuser all have BC well above 1 (1.25–1.87; shuffled controls 0.99–1.01). None of them is prior-dominated.
+- **NSD (current decoders).** Single-trial reconstructions of MindEye2, MindEye1 and Brain-Diffuser all have BC well above 1 (1.25–1.87; shuffled controls 0.99–1.01; MindEye2 in four subjects, the others in subject 1). All show reproducible, stimulus-specific variation at the single-trial level.
 - **Where the structure comes from.** In MindEye2 (subject 1), about 45% of the final-image BC excess (DreamSim) is explained by 40 semantic clusters. 55–63% of the within-stimulus variance of a single reconstruction comes from the diffusion seed.
 - **Relation to identification accuracy.** BC ranks the four NSD decoders in the same order as pairwise identification accuracy, but spaces them differently. BC is a calibrated, stage-wise diagnostic, not a replacement for identification accuracy.
 
@@ -19,7 +19,7 @@ Key findings:
 <img src="outputs/fig1_concept.png" width="700">
 </p>
 
-*Figure 1. On GOD, the same decoder and generator receive real or shuffled fMRI. Both produce plausible images with identical feature statistics; BC separates them.*
+*Figure 1. On GOD, the same decoder and generator receive real or shuffled fMRI. Both produce similar-looking images with identical feature statistics. BC computed on the decoded `cnn8` features separates them; the images come from a separate `relu7` pipeline, whose generated images are much less consistent (per-category image-space BC 1.036 on average).*
 
 ---
 
@@ -41,7 +41,7 @@ Even after destroying all brain–stimulus correspondence by shuffling fMRI sign
 - decoded feature magnitudes remain unchanged (the shuffled set contains the same vectors in a different order),
 - statistics that do not use the true stimulus show no sign of failure.
 
-Identification accuracy does fall to chance (0.5), because it compares the output with the presented stimulus. BC detects the failure as well, using only which trials share a stimulus, and reports it on a calibrated scale where BC = 1 means no brain information.
+Identification accuracy does fall to chance (0.5), because it compares the output with the presented stimulus. BC detects the failure as well, using only which trials share a stimulus, and reports it on a calibrated scale with a null value of 1.
 
 The same question matters for current diffusion-based decoders, where the prior is far stronger and every run of the sampler produces a different image. The NSD experiments below measure it there.
 
@@ -67,7 +67,9 @@ where:
   - Trials of the same stimulus give more similar outputs than randomly paired trials
   - Brain activity imposes consistent, stimulus-specific structure on the output
 
-BC measures **consistency, not correctness**. A decoder that turns every presentation of a stimulus into the same wrong image has high BC. Report BC together with a reference-based measure such as identification accuracy.
+BC measures **consistency, not correctness or provenance**. A decoder that turns every presentation of a stimulus into the same wrong image has high BC. A decoder that reads only the category from the brain and then outputs a fixed prototype image of that category also has very high BC, although the generator supplies every detail. Report BC together with a reference-based measure such as identification accuracy.
+
+The converse of "no stimulus information ⇒ BC = 1" does not hold in general: BC captures differences in the mean output between stimuli, so information carried only by the spread or shape of the output distribution leaves BC at 1.
 
 BC is a variance ratio, not a percentage. BC = 1.87 means stimulus-driven variance is about 0.87 times the within-stimulus variance (ICC ≈ 0.46). It does not mean that 87% of the image comes from the brain.
 
@@ -100,6 +102,7 @@ $F$ is the one-way ANOVA $F$ statistic computed on traces, which is the Calinski
 
 Consequences:
 - **Relation to the ICC.** With variance components $\sigma_w^2 = SS_W/(N-C)$ and $\sigma_s^2 = (SS_B/(C-1) - \sigma_w^2)/n$, $\mathrm{BC} = 1 + \frac{n(C-1)}{N-1}\,\sigma_s^2/\sigma_w^2 \approx 1/(1-\mathrm{ICC})$. The factor $n(C-1)/(N-1)$ is 0.999 for $C = 500$, $n = 3$. This needs no Gaussian assumption.
+- **Relation to I2C2.** The method-of-moments estimator of the image intraclass correlation coefficient ([Shou et al., 2013](https://doi.org/10.3758/s13415-013-0196-0)) estimates $\mathrm{tr}K_W$ by $SS_T/(N-1)$ and $\mathrm{tr}K_U$ by $SS_W/(N-C)$, so with stimuli in place of subjects $\mathrm{BC} = 1/(1-\hat\rho_\mathrm{I2C2})$ exactly.
 - **Effect size, not test statistic.** For a fixed effect, $F$ grows roughly in proportion to $n$, while $\mathrm{BC} - 1$ does not depend on $n$ (Finding 3). BC relates to $F$ the way an effect size relates to its test statistic.
 - **Null value (A2).** Under the null, $V_\text{pres}$ and $V_\text{brok}$ estimate the same variance, so BC ≈ 1 up to sampling noise (GOD Shuffled: 0.999–1.002 across subjects; NSD shuffled labels: 0.986–1.024 across all stages, subjects and image sets). These conditions check calibration.
 - **Information (A4).** For one dimension with Gaussian class-conditionals and shared variance, $I(s;\hat{x}_k) = h(\hat{x}_k) - h(\hat{x}_k \mid s) \le \tfrac12\log(\sigma_T^2/\sigma_W^2) = \tfrac12\log\mathrm{BC}_k$. This holds because a Gaussian has the largest entropy for a given variance. For the full $d$-dimensional vector the bound depends on $\det\Sigma_T / \det\Sigma_W$, not on traces. So $\tfrac12\log\mathrm{BC}$ should not be read as the mutual information of the whole output vector.
@@ -248,7 +251,7 @@ Across ten ROIs (`relu7` features), BC and identification accuracy are highly co
 
 ### NSD
 
-#### 5. Single-trial reconstructions of MindEye2 are clearly brain-controlled
+#### 5. Single-trial reconstructions of MindEye2 show stimulus-specific consistency
 
 Final-image BC (DreamSim, 500 images, 95% CI):
 
@@ -261,14 +264,14 @@ Final-image BC (DreamSim, 500 images, 95% CI):
 
 - BC is well above 1 in every subject and for both models; shuffled controls stay at 1 (0.986–1.009).
 - Less subject-specific training data (1sess) lowers final-image BC in every subject (+0.26 to +0.41). At the ridge stage (S0) the difference is small or absent; it appears from the backbone (S1) on.
-- With token means, BC decreases from the backbone to the prior to the final image in every subject.
+- With token means, BC decreases from the backbone to the prior to the final image in every subject. Because BC depends on the representation, this describes consistency in each representation and does not by itself locate where stimulus information is lost.
 
 ![BC along the MindEye2 pipeline](outputs/exp22_multisubject_bc.png)
 *Figure 7. (A) BC at each MindEye2 stage for subjects 1, 2, 5, 7 (small dots) and their mean. (B) Final-image BC against pairwise identification accuracy.*
 
-#### 6. About half of the final-image BC is category-level, and image-specific structure remains
+#### 6. About 45% of the final-image BC excess is explained by semantic clusters
 
-With 40 semantic clusters (subject 1), BC beyond category stays clearly above 1 at every stage (final image, DreamSim: 1.47 for 40sess, 1.27 for 1sess; lower CI bound > 1.12 for every stage, model and k). The clusters explain 44–46% of the final-image excess over 1 in DreamSim space (48–55% for CLIP embeddings, the space in which the clusters were defined), against 19–33% at the ridge and backbone stages. The share depends on how categories are defined (it grows with k). BC does not test generalization to categories absent from training.
+With 40 semantic clusters (subject 1), BC beyond category stays clearly above 1 at every stage (final image, DreamSim: 1.47 for 40sess, 1.27 for 1sess; lower CI bound > 1.12 for every stage, model and k). The clusters explain 44–46% of the final-image excess over 1 in DreamSim space (48–55% for CLIP embeddings, the space in which the clusters were defined), against 19–33% at the ridge and backbone stages. The share depends on how categories are defined (it grows with k). BC beyond category > 1 shows consistency that this clustering does not explain; finer semantic distinctions within clusters may account for part of it. BC does not test generalization to categories absent from training.
 
 ![Category-controlled BC](outputs/exp20b_beyond_category.png)
 *Figure 8. (A) BC and BC beyond category (k = 40) at each MindEye2 stage, subject 1. (B) Share of BC − 1 explained by the clusters.*
@@ -291,7 +294,7 @@ Subject 1, 414 common images:
 | Brain-Diffuser | 1.533 [1.502, 1.563] | 1.504 [1.474, 1.534] | 0.957 | 0.875 |
 | MindEye2 1sess | 1.470 [1.435, 1.508] | 1.425 [1.389, 1.460] | 0.901 | 0.765 |
 
-- All methods have final-image BC well above 1. None is prior-dominated at the single-trial level.
+- All methods have final-image BC well above 1: they show stimulus-specific consistency at the single-trial level.
 - BC and identification accuracy give the same ranking, and all six pairwise differences exclude 0 for both. Across subjects, the only disagreements concern subjects 1 and 5, whose values are close on both measures (differences ≤ 0.04 in BC and ≤ 0.02 in identification accuracy).
 - They space the decoders differently (exploratory). MindEye2 40sess and MindEye1 differ by 1.3 points of identification accuracy but by 0.195 in BC; Brain-Diffuser and MindEye2 1sess differ by 5.6 points but by only 0.063 in BC.
 
@@ -302,12 +305,12 @@ Subject 1, 414 common images:
 
 ## What Is New
 
-BC is not a new statistic. With the same number of trials per stimulus, it is an affine function of the one-way ANOVA $F$ statistic (the Calinski–Harabasz index) and approximately $1/(1-\mathrm{ICC})$. What this work contributes is how that quantity is read and used:
+BC is not a new statistic. With the same number of trials per stimulus, it is an affine function of the one-way ANOVA $F$ statistic (the Calinski–Harabasz index) and approximately $1/(1-\mathrm{ICC})$, and an exact transform of the I2C2 estimate. What this work contributes is how that reliability measure is applied to generative decoders:
 
-- **A calibrated effect size.** BC = 1 means no brain information, and $\mathrm{BC} - 1 \approx$ the ratio of stimulus-driven to within-stimulus variance. Unlike $F$, it does not grow with the number of trials, so values obtained with different numbers of repetitions can be compared, provided the stimuli and representation are the same (Finding 3).
+- **A calibrated effect size.** BC = 1 when the output carries no stimulus information, and $\mathrm{BC} - 1 \approx$ the ratio of stimulus-driven to within-stimulus variance. Unlike $F$, it does not grow with the number of trials, so values obtained with different numbers of repetitions can be compared, provided the stimuli and representation are the same (Finding 3).
 - **A label-only, stage-wise diagnostic.** BC needs only which trials share a stimulus, so it can be computed at every stage of a pipeline, including stages without a ground-truth target (Findings 1, 5).
-- **Decompositions for generative decoders.** Category-controlled BC and the seed decomposition separate category-level, image-specific and sampling-driven variability (Findings 6, 7).
-- **An audit of current decoders.** Single-trial reconstructions of MindEye2, MindEye1 and Brain-Diffuser are brain-controlled; prior dominance is a matter of degree (Findings 5–8).
+- **Decompositions for generative decoders.** Category-controlled BC and the seed decomposition separate the consistency explained by semantic clusters, the rest, and sampling-driven variability (Findings 6, 7).
+- **An audit of current decoders.** Single-trial reconstructions of MindEye2, MindEye1 and Brain-Diffuser show stimulus-specific consistency; its degree differs between decoders and training regimes (Findings 5–8).
 
 BC does not replace identification accuracy. In all our comparisons it ranks decoders in the same order (Finding 8).
 
@@ -425,7 +428,7 @@ With the same number of trials per stimulus, BC can also be computed directly wi
 
 Interpretation:
 ```text
-BC ≈ 1.0   → No stimulus information (prior- or sampling-dominated)
+BC ≈ 1.0   → No mean-level stimulus dependence detected in this representation
 BC > 1.0   → Brain activity imposes consistent, stimulus-specific structure
 ```
 
@@ -464,8 +467,8 @@ paper_outline.md               # Earlier paper outline
 
 ```bibtex
 @article{kikuchi2026bc,
-  title   = {How Much of a Brain Reconstruction Comes from the Brain?
-             Measuring Brain Control in Single-Trial fMRI-to-Image Decoding},
+  title   = {Stimulus-Specific Reliability and Sampling Variability
+             in Single-Trial fMRI-to-Image Decoding},
   author  = {Kikuchi, Yuki},
   year    = {2026},
   note    = {Preprint}

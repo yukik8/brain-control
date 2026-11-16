@@ -8,8 +8,7 @@ fig2_reconstruction_comparison.py
 
 キーメッセージ:
   - 3行の画像は視覚的にほぼ区別できない
-  - しかし BC は Real=1.259, Shuffled=1.001 と鋭く異なる
-  - → 視覚品質では "brain control" を検出できない
+  - 図には BC を載せない（画像は relu7 のパイプライン、論文の BC は cnn8 のデコーダの値で、別のものなので）
 """
 
 import sys, os
@@ -105,13 +104,6 @@ def main():
                       ha="center", va="center",
                       fontsize=12, fontweight="bold", color=edge_color,
                       transform=ax_label.transAxes)
-        ax_label.text(0.5, 0.28,
-                      f"BC = {bc_val:.3f}",
-                      ha="center", va="center",
-                      fontsize=10, color=edge_color,
-                      transform=ax_label.transAxes,
-                      bbox=dict(boxstyle="round,pad=0.25", facecolor="white",
-                                edgecolor=edge_color, linewidth=1.2))
 
         for ci, cat in enumerate(CATEGORIES):
             x_block_start = label_w + ci * (N_REPS * img_w + sep_w)
@@ -147,12 +139,6 @@ def main():
              "Same decoder and generator — only brain input differs",
              ha="center", va="top",
              fontsize=10, color="#555555", style="italic")
-
-    fig.text(0.5, fy(0.12),
-             "Real: genuine fMRI signals  ·  Shuffled: permuted fMRI (BC = 1 by construction)  ·  "
-             "Random: Gaussian noise",
-             ha="center", va="bottom",
-             fontsize=8.5, color="#666666")
 
     out_path = os.path.join(OUTPUT_DIR, "fig2_reconstruction_comparison.png")
     plt.savefig(out_path, dpi=180, bbox_inches="tight", facecolor="white")

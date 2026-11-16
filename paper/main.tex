@@ -24,8 +24,9 @@
 
 % ── タイトル ─────────────────────────────────────────────
 \title{%
-  \textbf{How Much of a Brain Reconstruction Comes from the Brain?}\\
-  \textbf{Measuring Brain Control in Single-Trial fMRI-to-Image Decoding}
+  \textbf{Stimulus-Specific Reliability and}\\
+  \textbf{Sampling Variability in Single-Trial}\\
+  \textbf{fMRI-to-Image Decoding}
 }
 
 \author{
@@ -45,35 +46,34 @@
 \begin{abstract}
 Brain-to-image decoders combine brain-derived features with strong generative
 priors and stochastic sampling, so a realistic reconstruction does not by itself
-show how much of it was determined by brain activity. We study the
-\textbf{Degree of Brain Control (BC)}: the ratio of the within-stimulus variance
-of decoder outputs under shuffled versus preserved trial--stimulus
-correspondence, computed over repeated presentations of the same stimuli.
-$\mathrm{BC}=1$ when the outputs carry no stimulus information. BC is an affine
-function of the one-way ANOVA $F$ statistic and approximately equals
-$1/(1-\mathrm{ICC})$: it measures how consistently a decoder maps repeated
-presentations of a stimulus to the same output, and unlike $F$ it does not grow
-with the number of repetitions. Because it needs only trial labels, BC can be
-computed at every stage of a pipeline, including representations that have no
-ground-truth target. We add two decompositions for generative decoders: one
-separates brain-driven from sampling-driven variability across diffusion seeds,
-the other separates category-level from image-specific information.
+show whether brain activity shaped it. We study the \textbf{Degree of Brain
+Control (BC)}: the ratio of the within-stimulus variance of decoder outputs
+under shuffled versus preserved trial--stimulus correspondence, computed over
+repeated presentations of the same stimuli. BC is a multivariate reliability
+measure. It is an affine function of the one-way ANOVA $F$ statistic and equals
+$1/(1-\mathrm{I2C2})$ for the method-of-moments estimate of the image intraclass
+correlation coefficient. BC exceeds 1 when stimulus-specific structure reaches
+the output, and unlike $F$ it does not grow with the number of repetitions.
+Because it needs only trial labels, BC can be computed in any representation of
+a pipeline. For generative decoders we add two decompositions: one separates
+trial-to-trial from sampling-driven variability across diffusion seeds, the
+other separates the part explained by a semantic clustering of the stimuli from
+the rest.
 
-On the GOD dataset, BC separates real from shuffled fMRI input (1.20 vs.\ 1.00,
-mean over five subjects), which reference-free statistics of the decoded
-features, such as their norm, cannot. On
-the Natural Scenes Dataset, single-trial reconstructions from MindEye2, MindEye1
-and Brain-Diffuser all have BC well above 1 (1.25--1.87 in DreamSim space across
-four subjects and three methods; shuffled controls 0.99--1.01), so none of them
-is prior-dominated. In MindEye2 (subject 1), 40 semantic clusters explain about
-45\% of the excess over 1 in the final images (DreamSim), and 55--63\% of the
-within-stimulus variance of a single reconstruction comes from the diffusion
-seed, so the excess measured from one sample per trial is less than half of its
-value with sampling removed. BC ranks the four decoders in the same order as
-pairwise identification accuracy but spaces them differently. We therefore
-propose BC not as a replacement for identification accuracy but as a calibrated,
-stage-wise diagnostic of how consistently brain activity shapes each
-reconstruction.
+On the GOD dataset, BC computed on decoded features separates real from
+shuffled fMRI input (1.20 vs.\ 1.00, mean over five subjects), which
+reference-free statistics such as the feature norm cannot. On the Natural
+Scenes Dataset, single-trial reconstructions of MindEye2 (four subjects),
+MindEye1 and Brain-Diffuser (subject 1) all show reproducible,
+stimulus-specific variation (BC 1.25--1.87 in DreamSim space; shuffled controls
+0.99--1.01). In MindEye2 (subject 1), 40 semantic clusters explain about 45\% of
+the excess over 1 in the final images, and 55--63\% of the within-stimulus
+variance of a single reconstruction comes from the diffusion seed. BC ranks the
+four decoders in the same order as pairwise identification accuracy but spaces
+them differently. BC does not measure how much of an image comes from the brain
+rather than from the prior. We propose it as a calibrated reliability
+diagnostic that complements identification accuracy and separates stimulus,
+trial, seed and category contributions.
 \end{abstract}
 
 % ─────────────────────────────────────────────────────────
@@ -119,10 +119,11 @@ stimulus information, whatever their visual quality. With the same number of
 trials per stimulus, BC is an affine function of the one-way ANOVA $F$
 statistic, i.e.\ the Calinski--Harabasz index \citep{calinski1974}, and is
 closely related to the intraclass correlation (ICC) \citep{shrout1979}. BC is
-therefore not a new statistic. Its value lies in reading this quantity as an
-effect size with a fixed null value of 1 that, unlike $F$, does not grow with
-the number of trials, and in applying it systematically to the stages of modern
-reconstruction pipelines.
+therefore not a new statistic: it is a multivariate reliability measure, and
+for a standard estimator it is an exact transform of the image intraclass
+correlation coefficient (I2C2) \citep{shou2013}. Our contribution is to apply
+it to generative fMRI-to-image decoders at the level of single trials, and to
+decompose it into the sources of variability specific to these decoders.
 
 BC and identification accuracy answer different questions. Identification
 accuracy asks whether a reconstruction is closer to its own stimulus than to
@@ -135,21 +136,31 @@ decoder is fixed and the sampling noise does not depend on the stimulus,
 structure that is consistent across presentations of a stimulus must have
 reached the output through the brain signal, whether or not it is correct.
 
+BC does not measure how much of the output's content comes from the brain
+rather than from the generative prior. Consider a decoder that reads only the
+category of a stimulus from the brain and then outputs a fixed prototype image
+of that category. Its outputs are nearly identical across presentations, so its
+BC is very high, yet every detail of the image---texture, pose,
+background---comes from the generator. A stable, brain-driven choice and
+extensive completion by the prior can coexist; BC detects the former and is
+silent about the latter.
+
 We make the following contributions:
 
 \begin{enumerate}[leftmargin=1.5em]
-  \item \textbf{A calibrated, label-only measure.} We define BC, show that it is
-    an affine function of $F$ and approximately $1/(1-\mathrm{ICC})$, and that,
-    unlike $F$, its scale does not depend on the number of trials. Because BC
-    uses only trial labels, it applies to any intermediate representation of a
-    pipeline, including spaces without a ground-truth target.
+  \item \textbf{A calibrated, label-only reliability measure.} We define BC and
+    show that it is an affine function of $F$, equals $1/(1-\mathrm{I2C2})$ for
+    the method-of-moments estimator and approximates $1/(1-\mathrm{ICC})$, and
+    that, unlike $F$, its scale does not depend on the number of trials.
+    Because BC uses only trial labels, it can be computed in any representation
+    of a pipeline, including spaces without a ground-truth target.
 
   \item \textbf{Decompositions for stochastic generative decoders.} A nested
     variance decomposition across diffusion seeds separates brain-driven from
     sampling-driven variability and gives BC as a function of the number of
-    samples averaged. A category-controlled variant separates semantic-category
-    information from image-specific information, addressing part of the concern
-    raised by \citet{shirakawa2025}.
+    samples averaged. A category-controlled variant separates the part of BC
+    explained by a semantic clustering of the stimuli from the rest, addressing
+    part of the concern raised by \citet{shirakawa2025}.
 
   \item \textbf{Validation under controlled inputs (GOD).} Real fMRI input
     yields $\mathrm{BC}>1$ in all five subjects, while shuffled input, whose
@@ -161,8 +172,8 @@ We make the following contributions:
   \item \textbf{A trial-level audit of current decoders (NSD).} We measure BC at
     four pipeline stages of MindEye2 in four subjects, and in the final images of
     MindEye1 and Brain-Diffuser, with predictions and analysis plans written
-    down in advance (\cref{sec:nsd-setup}). Single-trial reconstructions of all methods are
-    clearly brain-controlled; reducing MindEye2's subject-specific training data
+    down in advance (\cref{sec:nsd-setup}). Single-trial reconstructions of all
+    methods show reproducible, stimulus-specific variation; reducing MindEye2's subject-specific training data
     from 40 sessions to 1 lowers final-image BC in every subject; and, in
     subject 1, about 45\% of the final-image BC excess is explained by 40
     semantic clusters and more than half of the within-stimulus variability of
@@ -247,11 +258,16 @@ Neither analysis tests generalization to categories absent from training.
 \textbf{Variance-ratio and reliability statistics.} The ratio of between- to
 within-group variance underlies the one-way ANOVA $F$ statistic, the
 Calinski--Harabasz index of cluster validity \citep{calinski1974} and the ICC
-used to assess the reliability of repeated measurements \citep{shrout1979}. BC
-belongs to this family (\cref{sec:anova}). Our contribution is to read this
-quantity as a calibrated effect size of brain control, to extend it to the
-sources of variability specific to generative decoders, and to apply it stage
-by stage to current reconstruction pipelines.
+used to assess the reliability of repeated measurements \citep{shrout1979}. The
+closest prior work is the image intraclass correlation coefficient (I2C2) of
+\citet{shou2013}, which measures the reliability of replicated images with
+traces of covariance matrices, obtains confidence intervals by resampling
+subjects and builds a null distribution by permuting labels. With stimuli in
+place of subjects, BC is an exact transform of its method-of-moments estimate
+(\cref{sec:anova}). Our contribution is to apply this kind of reliability
+measure to generative fMRI-to-image decoders, to extend it to the sources of
+variability specific to them, and to audit current pipelines at the level of
+single trials.
 
 % ─────────────────────────────────────────────────────────
 \section{Method: Degree of Brain Control}
@@ -309,16 +325,24 @@ The \textbf{Degree of Brain Control} is defined as:
 
 \subsection{Interpretation}
 
-\textbf{$\mathrm{BC}=1$} (no brain control): Shuffling trial indices does not
-change the variance structure of the outputs. The mean output does not differ
-between stimuli; whatever structure the outputs have comes from the model prior
-or from sampling, not from the brain signal.
+\textbf{$\mathrm{BC}=1$} (no mean-level stimulus dependence): Shuffling trial
+indices does not change the variance structure of the outputs, because the mean
+output does not differ between stimuli. If the outputs carry no stimulus
+information, $\mathrm{BC}=1$ in the population, but the converse does not hold
+in general: BC captures differences in the mean output, so stimulus information
+carried only by the spread or shape of the output distribution leaves BC at 1.
+In practice, $\mathrm{BC}\approx1$ means that no mean-level separation by
+stimulus is detected in the chosen representation.
 
-\textbf{$\mathrm{BC}>1$} (brain control): Trials of the same stimulus produce
-more similar outputs than randomly paired trials, so brain signals impose
-consistent, stimulus-specific structure on the output.
+\textbf{$\mathrm{BC}>1$}: Trials of the same stimulus produce more similar
+outputs than randomly paired trials. Because the decoder is fixed and only its
+brain input depends on the stimulus, this stimulus-specific structure has
+reached the output through the brain signal. $\mathrm{BC}>1$ does not say how
+much of the output's content is determined by the brain rather than by the
+generator.
 
-The quantity $\mathrm{BC}-1$ serves as an effect size of brain influence. If,
+The quantity $\mathrm{BC}-1$ serves as an effect size of stimulus-specific
+consistency. If,
 for each stimulus, output dimension $k$ is Gaussian with a variance shared
 across stimuli, BC bounds the mutual information between the stimulus label and
 that dimension:
@@ -372,6 +396,16 @@ within-stimulus variance, and the ICC is the corresponding share of the total.
 The two scales differ in emphasis: the ICC is bounded by 1, whereas $\mathrm{BC}-1$
 grows without bound as stimulus-driven variance dominates.
 
+The relation is exact for the image intraclass correlation coefficient (I2C2) of
+\citet{shou2013}, defined as $1-\mathrm{tr}K_U/\mathrm{tr}K_W$ with $K_U$ the
+within-subject and $K_W$ the total covariance of replicated images. Its
+method-of-moments estimator uses $\mathrm{tr}\hat K_W=SS_T/(N-1)$ and
+$\mathrm{tr}\hat K_U=SS_W/(N-C)$, which with stimuli in place of subjects and
+\cref{eq:anova} gives
+\begin{equation}
+  \mathrm{BC}=\frac{1}{1-\hat\rho_\mathrm{I2C2}}.
+\end{equation}
+
 $F$ and BC also differ in scale with respect to $n$. For a fixed ratio of
 between- to within-stimulus variance, $F$ grows roughly in proportion to $n$,
 whereas BC approaches $1+\sigma_s^2/\sigma_w^2$ and does not depend on $n$. BC
@@ -386,9 +420,8 @@ relative to within-stimulus variance, so we expect them to rank decoders
 similarly. They differ in three respects. First, they measure different
 properties. BC measures the consistency of outputs across presentations of the
 same stimulus; identification accuracy measures how close outputs are to a
-ground-truth representation of the stimulus. Above-chance identification implies
-that the mean output differs between stimuli, and hence $\mathrm{BC}>1$ in the
-population, but beyond that neither measure determines the other. A decoder that
+ground-truth representation of the stimulus. The two are related, but neither
+determines the other. A decoder that
 maps every presentation of a stimulus to the same wrong output has high BC and
 chance-level identification; conversely, within-stimulus variability in
 directions that do not affect the comparison with the target lowers BC without
@@ -415,8 +448,10 @@ define
   \qquad
   \text{category share} = \frac{\mathrm{BC}-\mathrm{BC}_\text{beyond}}{\mathrm{BC}-1}.
 \end{equation}
-$\mathrm{BC}_\text{beyond}=1$ when outputs carry no information beyond the
-cluster of the stimulus.
+$\mathrm{BC}_\text{beyond}\approx1$ when the mean output depends on the stimulus
+only through its cluster. $\mathrm{BC}_\text{beyond}>1$ shows stimulus-specific
+consistency that the chosen clustering does not explain; finer semantic
+distinctions within a cluster can account for part of it.
 
 \subsection{Separating Brain-Driven from Sampling-Driven Variability}
 \label{sec:seed}
@@ -437,7 +472,10 @@ $\mathrm{BC}(1)$ corresponds to the usual single-sample setting.
 $\mathrm{BC}(\infty)$ removes sampling variability; it corresponds to embeddings
 averaged over infinitely many seeds and is not attained by any single image. The
 \textbf{sampling share} $\sigma_e^2/(\sigma_b^2+\sigma_e^2)$ is the fraction of
-the within-stimulus variance of one sample that comes from the seed.
+the within-stimulus variance of one sample that comes from the seed. The
+decomposition separates sampling variability from trial-to-trial variability.
+It does not isolate the contribution of the learned prior, which also shapes
+the content that is reproduced across seeds.
 
 \subsection{Computation and Uncertainty}
 \label{sec:computation}
@@ -509,14 +547,25 @@ accuracy against the true stimulus features (0.726 vs.\ 0.500, chance 0.5).
 indistinguishable in quality. Real BC exceeds Shuffled BC in every one of the
 five subjects (\cref{tab:multisubj}).
 
+These BC values describe the decoded \texttt{cnn8} features, not the images in
+\cref{fig:recon}, which come from a separate relu7 pipeline. In the generated
+images themselves, consistency is much weaker: on DreamSim embeddings of the
+relu7generator images, per-category BC averages 1.036 and correlates only
+weakly with feature-space BC across categories (\cref{app:god}). Consistency in
+the decoded features thus reaches the final images only in part, which is why
+we measure BC in the final images of the NSD decoders (\cref{sec:nsd}). This
+per-category average is not comparable to the pooled NSD values.
+
 \begin{figure}[tbp]
 \centering
 \includegraphics[width=\linewidth]{fig2_reconstruction_comparison.png}
 \caption{Reconstructed images under three input conditions (Real, Shuffled,
   Random) for three representative GOD categories (goldfish, butterfly,
-  bicycle), showing four repetitions each. All three rows look equally
-  plausible. Images are generated by the relu7generator from relu7 decoded
-  features; BC values refer to the \texttt{cnn8} decoder (\cref{tab:main}).}
+  bicycle), showing four repetitions each. The Real and Shuffled rows look
+  alike, and many images in both share a recurring pattern produced by the
+  generator. Images are generated by the relu7generator from relu7 decoded
+  features (Subject 1); BC values in the text refer to the separate
+  \texttt{cnn8} decoder and are therefore not shown here.}
 \label{fig:recon}
 \end{figure}
 
@@ -759,7 +808,7 @@ Subj. & Space & 40sess & 1sess & Difference & 40sess & 1sess \\
 
 \Cref{tab:stages,tab:subjects} and \cref{fig:stages} summarize the results.
 
-\textbf{Final images are clearly brain-controlled.} In every subject and for
+\textbf{Final images show stimulus-specific consistency.} In every subject and for
 both models, S3 BC is well above 1 (lowest lower CI bound 1.207, subject 7,
 1sess, CLIP) while the shuffled control stays at 1. Single-trial MindEye2
 reconstructions therefore carry substantial stimulus-specific structure.
@@ -771,26 +820,29 @@ two models is 1.8--2.1 in every subject. At the ridge stage the difference is
 small or absent (+0.063 and +0.168 in subjects 1 and 2; $-0.001$ and +0.004,
 with CIs including 0, in subjects 5 and 7), whereas it is larger at S1 (+0.21
 to +0.47), in the token-mean S1 and S2 (+0.32 to +0.83) and at S3. This pattern
-was not predicted and is exploratory; it suggests that the amount of
-subject-specific data affects the consistency of the outputs mainly after the
-ridge stage, through the shared backbone.
+was not predicted and is exploratory. Because the differences at different
+stages are measured in different representations, it is descriptive; it is
+consistent with subject-specific data acting mainly after the ridge stage,
+through the shared backbone.
 
-\textbf{Brain control decreases from the CLIP-like latents to the image, with
-token means.} We had predicted that BC would decrease from S1 to S2 to S3. With
+\textbf{BC across stages.} We had predicted that BC would decrease from S1 to S2 to S3. With
 token means, it does so in all four subjects and both models (e.g.\ subject 1,
 40sess: 2.82, 2.46, 1.87). In full dimension the prediction fails: S2 has the
 lowest BC of all stages (1.09--1.28), below S3. Sampling contributes most of the
 within-stimulus variance of the full-dimensional S2, but S2 stays below S3 even
-when sampling is removed from both (\cref{sec:nsd-seed}). Because the stages live in
-different spaces, comparisons between stages are approximate; comparisons
-between models at the same stage are the most reliable.
+when sampling is removed from both (\cref{sec:nsd-seed}). BC depends on the
+representation: it is not invariant to rescaling individual dimensions, and
+averaging over tokens changes it, as the full-dimensional and token-mean S2
+show. Differences between stages therefore describe consistency in each
+representation and do not by themselves locate where stimulus information is
+lost. Comparisons between models at the same stage are the most direct.
 
 \textbf{Subjects differ from the first stage.} Subject 7 has the lowest BC at
 every stage, starting at S0 (1.445 vs.\ 1.77--1.90 for the other three),
 suggesting that the difference originates in the input signal or the ridge
 mapping rather than in the generative stages (exploratory).
 
-\subsection{Category-Level versus Image-Specific Brain Control}
+\subsection{Consistency Explained by Semantic Clusters}
 \label{sec:nsd-category}
 
 \begin{table}[tbp]
@@ -835,8 +887,9 @@ checks) and computed $\mathrm{BC}_\text{beyond}$ (\cref{sec:beyond};
 $\mathrm{BC}_\text{beyond}$ stays clearly above 1 at every stage and for both
 models (S3 DreamSim: 1.47 for 40sess, 1.27 for 1sess; shuffled 0.987--0.998),
 and its lower CI bound is above 1.12 for every stage, model and $k$.
-MindEye2's single-trial reconstructions therefore contain image-specific
-information beyond 40 semantic clusters. At the same time, 44--46\% of the S3
+MindEye2's single-trial reconstructions therefore show stimulus-specific
+consistency that the 40 clusters do not explain; finer semantic distinctions
+within clusters could account for part of it. At the same time, 44--46\% of the S3
 excess over 1 in DreamSim space is explained by the clusters (48--55\% for CLIP
 embeddings, which share the space in which the clusters were defined), against
 19--33\% at the ridge and backbone stages (full dimension). The category share grows with $k$ (0.15--0.42
@@ -983,8 +1036,8 @@ BD $-$ ME2-1      & +0.056 [+0.047, +0.066] & +0.110 [+0.093, +0.127] \\
 
 All three methods yield final-image BC well above 1 (\cref{tab:methods},
 \cref{fig:methods}): 1.47--1.86 (DreamSim) on the common images, with the lowest
-lower CI bound at 1.389 (MindEye2 1sess, CLIP). None of the methods is
-prior-dominated at the single-trial level. The intermediate stages of MindEye1
+lower CI bound at 1.389 (MindEye2 1sess, CLIP). All methods thus show
+stimulus-specific consistency at the single-trial level. The intermediate stages of MindEye1
 and Brain-Diffuser show the same qualitative pattern as MindEye2: BC is highest
 in the CLIP-like representations (token means 2.3--3.2) and lower in the final
 image (\cref{tab:inter} in \cref{app:nsd}). Brain-Diffuser's final images (1.533)
@@ -1041,11 +1094,14 @@ trial--stimulus pairing were random; equivalently, stimulus-driven variance is
 about 0.87 times the within-stimulus variance, and the ICC is about 0.46
 (\cref{eq:icc}).
 
-BC measures consistency, not correctness. A high BC means that the brain signal
-reliably steers the output for a given stimulus; it does not mean that the
-output resembles the stimulus. Identification accuracy and perceptual
-similarity remain necessary for the latter, and category-controlled BC only
-separates out consistency at the level of the chosen categories.
+BC measures consistency, not correctness, and not provenance. A high BC means
+that the brain signal reliably steers the output for a given stimulus. It does
+not mean that the output resembles the stimulus, for which identification
+accuracy and perceptual similarity remain necessary. Nor does it mean that most
+of the image comes from the brain: in the prototype example of the
+Introduction, BC is very high although the generator supplies every detail.
+Category-controlled BC separates out only the consistency explained by the
+chosen categories.
 
 BC contains no information that $F$, the Calinski--Harabasz index or the ICC
 lack, and on NSD it ranks decoders as identification accuracy does. Its use lies
@@ -1055,22 +1111,26 @@ design, and $\mathrm{BC}-1$ does not depend on the number of trials
 different numbers of repetitions, provided the stimuli and the representation
 are the same. Second, BC needs only trial labels. It can
 therefore be computed at the ridge output or the backbone of a pipeline, where
-no ground-truth target exists, and it can be decomposed into brain-, category-
+no ground-truth target exists (although values at different stages describe
+consistency in different representations), and it can be decomposed into brain-, category-
 and sampling-driven parts, which identification accuracy cannot. Third, it can
 space decoders differently from identification accuracy (\cref{sec:nsd-ident}),
 although in our data the two never ordered decoders differently and we cannot
 say which spacing is more informative.
 
-\subsection{Prior Dominance Is a Matter of Degree}
+\subsection{Stimulus-Specific Consistency in Current Decoders}
 
 A natural expectation is that diffusion-based decoders, with priors trained on
-billions of images, would produce prior-dominated reconstructions with
-$\mathrm{BC}\approx1$ even from genuine brain data. Our NSD results do not
+billions of images, would produce outputs that barely depend on the stimulus
+($\mathrm{BC}\approx1$) even from genuine brain data. Our NSD results do not
 support this expectation for the decoders we tested: single-trial
 reconstructions of MindEye2, MindEye1 and Brain-Diffuser all have BC between
-1.25 and 1.87, and image-specific structure remains after accounting for 40
-semantic clusters. Dependence on the prior is a matter of degree, and BC
-resolves that degree. Reducing subject-specific training data lowers BC at
+1.25 and 1.87, and consistency that 40 semantic clusters do not explain
+remains. This does not mean that the prior contributes little to the images; a
+decoder can be highly consistent while the generator supplies most of the
+details. What BC shows is that the dependence of the output on the stimulus is
+a matter of degree, and that this degree differs between decoders and training
+regimes. Reducing subject-specific training data lowers BC at
 every stage after the ridge regression in every subject, and in each pipeline
 BC is lower in the final image than in the token-averaged CLIP-like latents. A
 simulation on GOD in which decoded features are mixed with shuffled features
@@ -1080,8 +1140,8 @@ weight (\cref{fig:prior} in \cref{app:god}).
 The seed decomposition qualifies how single reconstructions should be read. In
 MindEye2 (subject 1, 100 images), a single image combines a brain-driven part with a sampling part of comparable or
 larger size. BC measured from one sample per trial therefore understates, by
-more than half, the stimulus-specific structure that a decoder extracts from
-the brain, and a single reconstruction should be read as one draw from a
+more than half, the stimulus-specific consistency that the decoder would show
+without sampling noise, and a single reconstruction should be read as one draw from a
 distribution in which the seed contributes more within-stimulus variability
 than the brain. Whether this holds for other decoders remains to be tested.
 
@@ -1089,8 +1149,9 @@ than the brain. Whether this holds for other decoders remains to be tested.
 
 For decoders evaluated on repeated presentations, we suggest reporting:
 (i) BC with a shuffled control and stimulus-level bootstrap intervals, alongside
-identification accuracy; (ii) BC at each stage of the pipeline, to locate where
-brain-driven structure is lost; (iii) BC from several seeds per trial, with
+identification accuracy; (ii) BC at each stage of the pipeline, read as a
+description of consistency in each representation, with comparisons between
+models made at the same stage; (iii) BC from several seeds per trial, with
 BC(1) and BC($\infty$) or the sampling share; and (iv) category-controlled BC,
 with the definition of categories stated.
 
@@ -1102,10 +1163,12 @@ identification accuracy does. The GOD matched-accuracy result
 NSD (\cref{sec:nsd-ident}) rests on four decoders. Demonstrating a case in
 which BC changes a conclusion drawn from identification accuracy remains open.
 
-\textbf{Consistency is not correctness.} A decoder that is consistently wrong
-can have high BC, and a hallucination that is reproduced across presentations
-counts as brain control. BC should be reported together with a reference-based
-measure, not instead of one. Because NSD test images share categories with the
+\textbf{Consistency is neither correctness nor provenance.} A decoder that is
+consistently wrong can have high BC, and a hallucination that is reproduced
+across presentations counts as brain control. BC does not measure how much of
+an image comes from the brain rather than from the prior, and category control
+is relative to the chosen clustering. BC should be reported together with a
+reference-based measure, not instead of one. Because NSD test images share categories with the
 training images, BC also does not test generalization to unseen categories,
 which is central to the concern of \citet{shirakawa2025}.
 
@@ -1140,21 +1203,22 @@ and AlexNet features; a more expressive decoder could yield higher BC.
 % ─────────────────────────────────────────────────────────
 \section{Conclusion}
 
-Visual quality and similarity to the stimulus do not show how much of a
-reconstruction was determined by brain activity. The Degree of Brain Control
-answers this question with a variance ratio over repeated presentations: it
-equals 1 without brain control, is an affine function of the ANOVA $F$
-statistic, and has a scale that does not depend on the number of trials. On
-GOD, it separates real from shuffled input. On NSD, single-trial reconstructions
-of MindEye2, MindEye1 and Brain-Diffuser are clearly brain-controlled; less
-subject-specific training data lowers BC; about 45\% of the final-image BC
-excess is explained by 40 semantic clusters; and, in MindEye2, more than half
-of the within-stimulus variability of one reconstruction comes from the
-sampling seed. BC ranks
-decoders as identification accuracy does, so it is not a replacement for it.
-Its value is as a calibrated, label-only diagnostic of consistency that can be
-applied at every stage of a pipeline and decomposed into brain, category and
-sampling contributions.
+Visual quality and similarity to the stimulus do not show whether brain activity
+shaped a reconstruction. The Degree of Brain Control answers part of this
+question with a reliability measure over repeated presentations: it equals 1
+when the mean output does not depend on the stimulus, is an affine function of
+the ANOVA $F$ statistic and an exact transform of the I2C2 estimate, and has a
+scale that does not depend on the number of trials. On GOD, it separates real
+from shuffled input in decoded features. On NSD, single-trial reconstructions
+of MindEye2, MindEye1 and Brain-Diffuser all show stimulus-specific
+consistency; less subject-specific training data lowers BC; about 45\% of the
+final-image BC excess is explained by 40 semantic clusters; and, in MindEye2,
+more than half of the within-stimulus variability of one reconstruction comes
+from the sampling seed. BC ranks decoders as identification accuracy does, and
+it does not tell how much of an image comes from the brain rather than from the
+prior. Its value is as a calibrated, label-only reliability diagnostic that
+complements identification accuracy and separates stimulus, trial, seed and
+category contributions.
 
 % ─────────────────────────────────────────────────────────
 \section*{Code and Data Availability}
