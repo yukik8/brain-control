@@ -1,20 +1,21 @@
 """
 exp18_prior_strength.py
 ------------------------
-Experiment 18: Prior strength simulation — BC as a function of prior dominance
+Experiment 18: BC as a function of the mixing weight between real and shuffled decoded features
 
-「prior が強くなるほど BC → 1」を feature mixing で直接実証する。
+デコードした特徴量に shuffled の特徴量を混ぜる割合を変えて、BC が 1 まで連続的に下がるかを見る。
 
 手法:
   x_mixed(α) = (1 - α) * x_real + α * x_shuffled
   α = 0: Real decoded features (genuine brain control)
   α = 1: Shuffled decoded features (prior-dominated by construction)
 
-  α を 0 → 1 で変化させると BC が連続的に 1.259 → 1.001 に低下することを示す。
+  α を 0 → 1 で変化させると BC が単調に 1.259 → 1.001 に低下する（S 字形）。
+  混ぜるのは shuffled の特徴量で、生成モデルの prior そのものではない。
 
-論文への寄与:
-  Discussion 5.2「Diffusion の prior が強いほど BC → 1」という仮説を
-  feature-mixing という制御実験で直接実証する。
+使い方（リポジトリの直下で実行する）：
+    python experiments/exp18_prior_strength.py               # GOD のデータから計算して図を描く
+    python experiments/exp18_prior_strength.py --plot_only   # 保存した npz から図だけ描き直す
 """
 
 import sys, os
@@ -49,6 +50,81 @@ def decode(brain_train_n, brain_test_n, feat_train_n, f_sc, alpha=100.0):
     decoder.fit(brain_train_n, feat_train_n)
     pred_n = decoder.predict(brain_test_n)
     return f_sc.inverse_transform(pred_n).astype(np.float32)
+
+
+def plot(bc_means, bc_sems):
+    """BC と α の関係を描く（main と --plot_only の両方から使う）。"""
+    # ── プロット ──
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.5), facecolor="white")
+    fig.subplots_adjust(wspace=0.38)
+
+    color_main = "#2c7bb6"
+
+    # 左パネル: BC vs α
+    ax = axes[0]
+    ax.plot(ALPHAS, bc_means, "o-", color=color_main,
+            linewidth=2.0, markersize=5, zorder=3)
+    ax.fill_between(ALPHAS,
+                    bc_means - bc_sems,
+                    bc_means + bc_sems,
+                    color=color_main, alpha=0.15, zorder=2)
+
+    ax.axhline(1.0, color="#333333", linestyle="--", linewidth=1.2,
+               label="BC = 1  (no brain information)", zorder=1)
+
+    # α=0 と α=1 のアノテーション
+    ax.annotate(f"$\\alpha$=0 (Real)\nBC={bc_means[0]:.3f}",
+                xy=(0, bc_means[0]),
+                xytext=(0.03, bc_means[-1] + 0.62 * (bc_means[0] - bc_means[-1])),
+                fontsize=9, color=color_main,
+                arrowprops=dict(arrowstyle="->", color=color_main, lw=0.9))
+    ax.annotate(f"$\\alpha$=1 (Shuffled)\nBC={bc_means[-1]:.3f}",
+                xy=(1.0, bc_means[-1]),
+                xytext=(0.62, bc_means[-1] + 0.45 * (bc_means[0] - bc_means[-1])),
+                fontsize=9, color="#d7442a",
+                arrowprops=dict(arrowstyle="->", color="#d7442a", lw=0.9))
+
+    ax.set_xlabel("Mixing weight $\\alpha$\n"
+                  "($\\alpha$=0: real decoded features, $\\alpha$=1: shuffled)",
+                  fontsize=10)
+    ax.set_ylabel("BC (Degree of Brain Control)", fontsize=10)
+    ax.set_title("(A)  BC decreases monotonically\nas the shuffled share increases",
+                 fontsize=10, fontweight="bold", pad=7)
+    ax.legend(fontsize=9, loc="upper right", framealpha=0.9)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.tick_params(labelsize=9)
+
+    # 右パネル: 正規化カーブ（0→1 スケール）
+    ax = axes[1]
+    bc_norm = (bc_means - bc_means[-1]) / (bc_means[0] - bc_means[-1])
+    ax.plot(ALPHAS, bc_norm, "o-", color=color_main,
+            linewidth=2.0, markersize=5, zorder=3,
+            label="BC (normalized)")
+    ax.plot(ALPHAS, 1 - ALPHAS, "--", color="#888888",
+            linewidth=1.5, zorder=2, label="Linear reference")
+
+    ax.set_xlabel("Mixing weight $\\alpha$", fontsize=10)
+    ax.set_ylabel("Normalized BC\n(1 = real, 0 = shuffled)",
+                  fontsize=10)
+    ax.set_title("(B)  Normalized BC vs. mixing weight\n(dashed: linear reference)",
+                 fontsize=10, fontweight="bold", pad=7)
+    ax.legend(fontsize=9, framealpha=0.9)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.tick_params(labelsize=9)
+    ax.set_ylim(-0.05, 1.15)
+
+    fig.suptitle(
+        "Mixing real with shuffled decoded features (GOD, Subject 1)\n"
+        "(feature mixing: $x_{\\mathrm{mixed}} = (1-\\alpha)\\, x_{\\mathrm{real}} + \\alpha\\, x_{\\mathrm{shuffled}}$)",
+        fontsize=10.5, y=1.08, color="#222222"
+    )
+
+    out_path = os.path.join(OUTPUT_DIR, "exp18_prior_strength.png")
+    plt.savefig(out_path, dpi=180, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    print(f"\nSaved: {out_path}")
 
 
 def main():
@@ -103,77 +179,7 @@ def main():
     bc_means = np.array(bc_means)
     bc_sems  = np.array(bc_sems)
 
-    # ── プロット ──
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4.5), facecolor="white")
-    fig.subplots_adjust(wspace=0.38)
-
-    color_main = "#2c7bb6"
-
-    # 左パネル: BC vs α
-    ax = axes[0]
-    ax.plot(ALPHAS, bc_means, "o-", color=color_main,
-            linewidth=2.0, markersize=5, zorder=3)
-    ax.fill_between(ALPHAS,
-                    bc_means - bc_sems,
-                    bc_means + bc_sems,
-                    color=color_main, alpha=0.15, zorder=2)
-
-    ax.axhline(1.0, color="#333333", linestyle="--", linewidth=1.2,
-               label="BC = 1  (prior-only baseline)", zorder=1)
-
-    # α=0 と α=1 のアノテーション
-    ax.annotate(f"$\\alpha$=0 (Real)\nBC={bc_means[0]:.3f}",
-                xy=(0, bc_means[0]),
-                xytext=(0.08, bc_means[0] + 0.012),
-                fontsize=9, color=color_main,
-                arrowprops=dict(arrowstyle="->", color=color_main, lw=0.9))
-    ax.annotate(f"$\\alpha$=1 (Shuffled)\nBC={bc_means[-1]:.3f}",
-                xy=(1.0, bc_means[-1]),
-                xytext=(0.72, bc_means[-1] + 0.012),
-                fontsize=9, color="#d7442a",
-                arrowprops=dict(arrowstyle="->", color="#d7442a", lw=0.9))
-
-    ax.set_xlabel("Prior dominance $\\alpha$\n"
-                  "($\\alpha$=0: genuine brain signals, $\\alpha$=1: shuffled signals)",
-                  fontsize=10)
-    ax.set_ylabel("BC (Degree of Brain Control)", fontsize=10)
-    ax.set_title("(A)  BC decreases monotonically\nas prior dominance increases",
-                 fontsize=10, fontweight="bold", pad=7)
-    ax.legend(fontsize=9, loc="upper right", framealpha=0.9)
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    ax.tick_params(labelsize=9)
-
-    # 右パネル: 正規化カーブ（0→1 スケール）
-    ax = axes[1]
-    bc_norm = (bc_means - bc_means[-1]) / (bc_means[0] - bc_means[-1])
-    ax.plot(ALPHAS, bc_norm, "o-", color=color_main,
-            linewidth=2.0, markersize=5, zorder=3,
-            label="BC (normalized)")
-    ax.plot(ALPHAS, 1 - ALPHAS, "--", color="#888888",
-            linewidth=1.5, zorder=2, label="Linear reference")
-
-    ax.set_xlabel("Prior dominance $\\alpha$", fontsize=10)
-    ax.set_ylabel("Normalized BC\n(1 = full brain control, 0 = prior-dominated)",
-                  fontsize=10)
-    ax.set_title("(B)  Normalized BC vs. prior dominance\n(near-linear relationship)",
-                 fontsize=10, fontweight="bold", pad=7)
-    ax.legend(fontsize=9, framealpha=0.9)
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    ax.tick_params(labelsize=9)
-    ax.set_ylim(-0.05, 1.15)
-
-    fig.suptitle(
-        "Stronger generative prior continuously suppresses BC toward 1\n"
-        "(feature mixing: $x_{\\mathrm{mixed}} = (1-\\alpha)\\, x_{\\mathrm{real}} + \\alpha\\, x_{\\mathrm{shuffled}}$)",
-        fontsize=10.5, y=1.02, color="#222222"
-    )
-
-    out_path = os.path.join(OUTPUT_DIR, "exp18_prior_strength.png")
-    plt.savefig(out_path, dpi=180, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
-    print(f"\nSaved: {out_path}")
+    plot(bc_means, bc_sems)
 
     np.savez(
         os.path.join(OUTPUT_DIR, "exp18_prior_strength.npz"),
@@ -185,4 +191,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if "--plot_only" in sys.argv:                       # 保存した npz から図だけ描き直す（データは読まない）
+        d = np.load(os.path.join(OUTPUT_DIR, "exp18_prior_strength.npz"))
+        plot(d["bc_means"], d["bc_sems"])
+    else:
+        main()

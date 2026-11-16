@@ -152,7 +152,7 @@ def main():
     ax.tick_params(axis="y", labelsize=9)
 
     fig.suptitle(
-        "BC captures structural degradation not detectable by identification accuracy",
+        "BC and identification accuracy as noise is added to V1 signals (GOD, Subject 1)",
         fontsize=11, y=1.02, color="#222222"
     )
 

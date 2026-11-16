@@ -155,7 +155,7 @@ def main():
     ax.tick_params(labelsize=9)
 
     fig.suptitle(
-        "BC and identification accuracy are correlated but not equivalent",
+        "BC and identification accuracy across ROIs (GOD, Subject 1)",
         fontsize=11, y=1.02, color="#222222"
     )
 
