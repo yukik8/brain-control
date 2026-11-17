@@ -156,7 +156,7 @@ We make the following contributions:
     of a pipeline, including spaces without a ground-truth target.
 
   \item \textbf{Decompositions for stochastic generative decoders.} A nested
-    variance decomposition across diffusion seeds separates brain-driven from
+    variance decomposition across diffusion seeds separates trial-to-trial from
     sampling-driven variability and gives BC as a function of the number of
     samples averaged. A category-controlled variant separates the part of BC
     explained by a semantic clustering of the stimuli from the rest, addressing
@@ -225,8 +225,9 @@ brain-decoded input and the final image. In VAEs \citep{kingma2014}, GANs
 \citep{goodfellow2014} and diffusion models \citep{ho2020,song2021} alike, the
 generator is trained to produce outputs on the natural-image manifold, so
 stronger priors may yield more realistic reconstructions at the cost of
-reflecting individual brain states less. BC turns this trade-off into a
-measurable quantity.
+reflecting individual brain states less. This motivates assessing
+stimulus-specific reliability alongside reconstruction accuracy and perceptual
+quality.
 
 \subsection{Evaluating Reconstructions}
 
@@ -252,7 +253,8 @@ hallucination by diffusion models. These two concerns motivate our
 category-controlled BC (\cref{sec:beyond}), which asks how much of the measured
 brain control remains once coarse semantic categories are accounted for, and
 our seed decomposition (\cref{sec:seed}), which measures how much of the
-variability of a reconstruction comes from the sampler rather than the brain.
+within-stimulus variability of a reconstruction comes from the sampler rather
+than from differences between trials.
 Neither analysis tests generalization to categories absent from training.
 
 \textbf{Variance-ratio and reliability statistics.} The ratio of between- to
@@ -453,12 +455,12 @@ only through its cluster. $\mathrm{BC}_\text{beyond}>1$ shows stimulus-specific
 consistency that the chosen clustering does not explain; finer semantic
 distinctions within a cluster can account for part of it.
 
-\subsection{Separating Brain-Driven from Sampling-Driven Variability}
+\subsection{Separating Trial-to-Trial from Sampling-Driven Variability}
 \label{sec:seed}
 
 In a diffusion-based pipeline, two trials of the same stimulus differ both
-because the brain responses differ and because the sampler draws different
-noise. To separate these, we generate each trial with $R$ seeds and fit a nested
+because the measured responses differ (neural variability, measurement noise and
+preprocessing) and because the sampler draws different noise. To separate these, we generate each trial with $R$ seeds and fit a nested
 ANOVA (stimulus $>$ trial $>$ seed) with mean squares $MS_A$, $MS_B$, $MS_E$:
 $\sigma_e^2=MS_E$ (seed), $\sigma_b^2=(MS_B-MS_E)/R$ (trial) and
 $\sigma_a^2=(MS_A-MS_B)/(nR)$ (stimulus). BC for outputs averaged over $k$ seeds
@@ -551,10 +553,13 @@ These BC values describe the decoded \texttt{cnn8} features, not the images in
 \cref{fig:recon}, which come from a separate relu7 pipeline. In the generated
 images themselves, consistency is much weaker: on DreamSim embeddings of the
 relu7generator images, per-category BC averages 1.036 and correlates only
-weakly with feature-space BC across categories (\cref{app:god}). Consistency in
-the decoded features thus reaches the final images only in part, which is why
-we measure BC in the final images of the NSD decoders (\cref{sec:nsd}). This
-per-category average is not comparable to the pooled NSD values.
+weakly with feature-space BC across categories (\cref{app:god}). The two values
+come from different decoders, feature spaces and training sets, so they do not
+measure how much consistency passes from one stage of a pipeline to the next.
+They do show that consistency found with a feature decoder has to be checked
+directly in the final images, which is what we do for the NSD decoders
+(\cref{sec:nsd}). This per-category average is not comparable to the pooled
+NSD values.
 
 \begin{figure}[tbp]
 \centering
@@ -905,7 +910,7 @@ image stages. This was not supported: the share was similar (S2, 0.29 vs.\
 the prediction did not cover, it was larger for 1sess (0.27 vs.\ 0.19 and 0.33
 vs.\ 0.22; exploratory).
 
-\subsection{Brain versus Sampling Variability}
+\subsection{Trial-to-Trial versus Sampling Variability}
 \label{sec:nsd-seed}
 
 \begin{table}[tbp]
@@ -1138,12 +1143,14 @@ shows the same graded behavior: BC decreases monotonically with the mixing
 weight (\cref{fig:prior} in \cref{app:god}).
 
 The seed decomposition qualifies how single reconstructions should be read. In
-MindEye2 (subject 1, 100 images), a single image combines a brain-driven part with a sampling part of comparable or
-larger size. BC measured from one sample per trial therefore understates, by
-more than half, the stimulus-specific consistency that the decoder would show
-without sampling noise, and a single reconstruction should be read as one draw from a
-distribution in which the seed contributes more within-stimulus variability
-than the brain. Whether this holds for other decoders remains to be tested.
+MindEye2 (subject 1, 100 images), the seed accounted for 55--63\% of the
+within-stimulus variance of a single reconstruction in the embedding spaces we
+evaluated. As a result, $\mathrm{BC}(1)-1$, measured from one sample per trial,
+is only 37--45\% of $\mathrm{BC}(\infty)-1$, the value without sampling
+variability. A single reconstruction should be read as one draw from a
+distribution in which the seed contributes more within-stimulus variance than
+differences between trials. Whether this holds for other decoders remains to be
+tested.
 
 \subsection{Recommendations for Reporting}
 
@@ -1203,10 +1210,9 @@ and AlexNet features; a more expressive decoder could yield higher BC.
 % ─────────────────────────────────────────────────────────
 \section{Conclusion}
 
-Visual quality and similarity to the stimulus do not show whether brain activity
-shaped a reconstruction. The Degree of Brain Control answers part of this
-question with a reliability measure over repeated presentations: it equals 1
-when the mean output does not depend on the stimulus, is an affine function of
+Visual quality and target similarity do not characterize the reliability of
+reconstructions across repeated presentations. The Degree of Brain Control
+measures this reliability. It equals 1 when the mean output does not depend on the stimulus, is an affine function of
 the ANOVA $F$ statistic and an exact transform of the I2C2 estimate, and has a
 scale that does not depend on the number of trials. On GOD, it separates real
 from shuffled input in decoded features. On NSD, single-trial reconstructions
@@ -1247,7 +1253,7 @@ stimulus images or reconstructions.
 \label{fig:scatter}
 \end{figure}
 
-\textbf{Prior mixing.} We linearly interpolate decoded features between the
+\textbf{Mixing real and shuffled decoded features.} We linearly interpolate decoded features between the
 Real condition ($\alpha=0$) and the Shuffled condition ($\alpha=1$):
 $\hat{\mathbf{x}}_\alpha=(1-\alpha)\,\hat{\mathbf{x}}_\mathrm{real}+\alpha\,\hat{\mathbf{x}}_\mathrm{shuffled}$.
 As $\alpha$ increases from 0 to 1, BC decreases monotonically from 1.259 to
@@ -1266,8 +1272,10 @@ As $\alpha$ increases from 0 to 1, BC decreases monotonically from 1.259 to
 relu7generator images, per-category BC has mean $1.036\pm0.105$ (std) across
 the 50 categories, ranging from 0.840 (shovel) to 1.299 (goldfish). Its
 correlation with feature-space BC (\texttt{cnn8}) across categories is weak
-($r=0.257$, $p=0.072$). Feature-space brain control on GOD thus transfers only
-partly to the generated images.
+($r=0.257$, $p=0.072$). Because the feature-space values come from a different
+decoder (\texttt{cnn8}), this comparison does not measure how much consistency
+passes from features to images within one pipeline; it shows that consistency
+in the final images has to be measured directly.
 
 \section{Intermediate Stages of MindEye1 and Brain-Diffuser}
 \label{app:nsd}

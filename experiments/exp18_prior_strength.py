@@ -70,7 +70,7 @@ def plot(bc_means, bc_sems):
                     color=color_main, alpha=0.15, zorder=2)
 
     ax.axhline(1.0, color="#333333", linestyle="--", linewidth=1.2,
-               label="BC = 1  (no brain information)", zorder=1)
+               label="BC = 1\n(no mean-level\nstimulus dependence)", zorder=1)
 
     # α=0 と α=1 のアノテーション
     ax.annotate(f"$\\alpha$=0 (Real)\nBC={bc_means[0]:.3f}",
@@ -90,7 +90,7 @@ def plot(bc_means, bc_sems):
     ax.set_ylabel("BC (Degree of Brain Control)", fontsize=10)
     ax.set_title("(A)  BC decreases monotonically\nas the shuffled share increases",
                  fontsize=10, fontweight="bold", pad=7)
-    ax.legend(fontsize=9, loc="upper right", framealpha=0.9)
+    ax.legend(fontsize=9, loc="lower left", bbox_to_anchor=(0.0, 0.08), framealpha=0.9)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.tick_params(labelsize=9)

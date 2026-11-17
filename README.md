@@ -19,7 +19,7 @@ Key findings:
 <img src="outputs/fig1_concept.png" width="700">
 </p>
 
-*Figure 1. On GOD, the same decoder and generator receive real or shuffled fMRI. Both produce similar-looking images with identical feature statistics. BC computed on the decoded `cnn8` features separates them; the images come from a separate `relu7` pipeline, whose generated images are much less consistent (per-category image-space BC 1.036 on average).*
+*Figure 1. On GOD, the same decoder and generator receive real or shuffled fMRI. Both produce similar-looking images with identical feature statistics. BC computed on the decoded `cnn8` features separates them; the images come from a separate `relu7` pipeline. In those generated images, per-category image-space BC averages 1.036; because the two values come from different decoders, this shows that consistency found with a feature decoder has to be checked directly in the final images, not how much of it passes from features to images.*
 
 ---
 
