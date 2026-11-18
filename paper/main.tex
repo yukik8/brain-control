@@ -66,9 +66,14 @@ reference-free statistics such as the feature norm cannot. On the Natural
 Scenes Dataset, single-trial reconstructions of MindEye2 (four subjects),
 MindEye1 and Brain-Diffuser (subject 1) all show reproducible,
 stimulus-specific variation (BC 1.25--1.87 in DreamSim space; shuffled controls
-0.99--1.01). In MindEye2 (subject 1), 40 semantic clusters explain about 45\% of
-the excess over 1 in the final images, and 55--63\% of the within-stimulus
-variance of a single reconstruction comes from the diffusion seed. BC ranks the
+0.99--1.01), and this consistency is not explained by the temporal proximity
+of the repeated presentations. In MindEye2, 40 semantic clusters explain
+43--53\% of the excess over 1 in the final images (four subjects), and in
+subject 1, 55--63\% of the within-stimulus variance of a single reconstruction
+comes from the diffusion seed. A category-only version of each decoder, built
+by permuting trials within clusters, still reaches BC of 1.11--1.30 and pairwise
+identification accuracy of 0.72--0.87; only category-controlled measures
+separate it from the decoder. BC ranks the
 four decoders in the same order as pairwise identification accuracy but spaces
 them differently. BC does not measure how much of an image comes from the brain
 rather than from the prior. We propose it as a calibrated reliability
@@ -160,7 +165,9 @@ We make the following contributions:
     sampling-driven variability and gives BC as a function of the number of
     samples averaged. A category-controlled variant separates the part of BC
     explained by a semantic clustering of the stimuli from the rest, addressing
-    part of the concern raised by \citet{shirakawa2025}.
+    part of the concern raised by \citet{shirakawa2025}. A category-only control,
+    built by permuting trials within clusters, shows what BC and identification
+    accuracy would report for a decoder that reads only the category.
 
   \item \textbf{Validation under controlled inputs (GOD).} Real fMRI input
     yields $\mathrm{BC}>1$ in all five subjects, while shuffled input, whose
@@ -173,11 +180,13 @@ We make the following contributions:
     four pipeline stages of MindEye2 in four subjects, and in the final images of
     MindEye1 and Brain-Diffuser, with predictions and analysis plans written
     down in advance (\cref{sec:nsd-setup}). Single-trial reconstructions of all
-    methods show reproducible, stimulus-specific variation; reducing MindEye2's subject-specific training data
-    from 40 sessions to 1 lowers final-image BC in every subject; and, in
-    subject 1, about 45\% of the final-image BC excess is explained by 40
-    semantic clusters and more than half of the within-stimulus variability of
-    one reconstruction comes from the sampling seed.
+    methods show reproducible, stimulus-specific variation that is not explained
+    by session effects or by the temporal proximity of repetitions; reducing
+    MindEye2's subject-specific training data from 40 sessions to 1 lowers
+    final-image BC in every subject; 43--53\% of the final-image BC excess is
+    explained by 40 semantic clusters in four subjects; and, in subject 1, more
+    than half of the within-stimulus variability of one reconstruction comes
+    from the sampling seed.
 
   \item \textbf{An explicit comparison with identification accuracy.} BC and
     pairwise identification accuracy order the four decoders identically; across
@@ -679,7 +688,12 @@ BC measures something identification accuracy cannot; the NSD comparisons in
 
 \textbf{Data.} We use the shared test images of NSD \citep{allen2022}, each
 viewed three times by each subject ($n=3$). Every analysis uses single-trial
-fMRI responses; the three trials are never averaged.
+fMRI responses; the three trials are never averaged. The presentation order of
+NSD is the same for all subjects, and for the shared images the three
+presentations are close in time: in the trials we analyze, all three fall in
+the same session for 97.8\% of the images and 78.7\% of the pairs of
+presentations fall in the same run (median 17 trials between the first and the
+last presentation). \Cref{sec:nsd-temporal} examines whether this inflates BC.
 
 \textbf{MindEye2.} We use the public MindEye2 models \citep{scotti2024} for
 subjects 1, 2, 5 and 7. Both are fine-tuned after shared-subject pretraining,
@@ -747,8 +761,12 @@ the category analysis before it was run. For the method comparison we made no
 predictions about differences between methods; its two checks (shuffled control
 close to 1, lower CI bound above 1) were planned before generation, while the
 tolerance of the first ($\pm0.05$) and the analysis details were fixed after
-generation but before the results were examined. These plans were not externally registered. We state
-below which predictions failed.
+generation but before the results were examined. For the additional checks of
+\cref{sec:nsd-catonly,sec:nsd-temporal}, which use only existing outputs, we
+wrote predictions before running the analyses; two changes to the plan, made
+after checks on synthetic data and before the analyses, are noted where they
+apply. These plans were not externally registered. We state below which
+predictions failed.
 
 \subsection{Brain Control along the MindEye2 Pipeline}
 \label{sec:nsd-stages}
@@ -909,6 +927,129 @@ image stages. This was not supported: the share was similar (S2, 0.29 vs.\
 0.27) or smaller (token-mean S2 and S3). At the ridge and backbone stages, which
 the prediction did not cover, it was larger for 1sess (0.27 vs.\ 0.19 and 0.33
 vs.\ 0.22; exploratory).
+
+\begin{table}[tbp]
+\centering
+\caption{Category-controlled BC in four subjects (final images, DreamSim, $k=40$;
+  MindEye2, 500 images, 95\% CI in brackets).}
+\label{tab:beyond4}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llccc}
+\toprule
+Subj. & Model & Category share & $\mathrm{BC}_\text{beyond}$ & Identification, within cluster / all \\
+\midrule
+1 & 40sess & 0.460 [0.433, 0.490] & 1.468 [1.438, 1.497] & 0.905 / 0.982 \\
+  & 1sess  & 0.435 [0.397, 0.474] & 1.273 [1.250, 1.296] & 0.765 / 0.902 \\
+2 & 40sess & 0.444 [0.416, 0.475] & 1.461 [1.430, 1.493] & 0.900 / 0.977 \\
+  & 1sess  & 0.434 [0.396, 0.474] & 1.239 [1.218, 1.259] & 0.753 / 0.879 \\
+5 & 40sess & 0.470 [0.441, 0.498] & 1.460 [1.431, 1.489] & 0.905 / 0.986 \\
+  & 1sess  & 0.525 [0.486, 0.561] & 1.216 [1.197, 1.235] & 0.750 / 0.904 \\
+7 & 40sess & 0.517 [0.486, 0.550] & 1.246 [1.225, 1.267] & 0.849 / 0.953 \\
+  & 1sess  & 0.460 [0.413, 0.507] & 1.133 [1.119, 1.148] & 0.693 / 0.819 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Four subjects.} The same analysis in subjects 2, 5 and 7
+(\cref{tab:beyond4}) gives the same picture. In the final images, the clusters
+explain 43--53\% of the excess over 1 (DreamSim; 47--60\% for CLIP), and
+$\mathrm{BC}_\text{beyond}$ remains above 1 at every stage, for both models and
+all three values of $k$ (lowest lower CI bound 1.044). Within-cluster
+identification is above chance and below overall identification in every
+subject, and $\mathrm{BC}_\text{beyond}$ is higher for 40sess than for 1sess in
+every subject. Whether the 1sess model relies more on categories has no
+consistent answer: at the final image, its category share is smaller than that
+of 40sess in subject 7, similar in subjects 1 and 2, and larger in subject 5
+($-0.055$ [$-0.080$, $-0.030$] for 40sess $-$ 1sess), against our prediction
+for that subject.
+
+\subsection{A Category-Only Control}
+\label{sec:nsd-catonly}
+
+\begin{table}[tbp]
+\centering
+\caption{Decoders and their category-only versions (final images, DreamSim,
+  $k=40$; MindEye2, 500 images). Each cell gives the decoder / its
+  category-only version.}
+\label{tab:catonly}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llcccc}
+\toprule
+ & & & & \multicolumn{2}{c}{Identification} \\
+\cmidrule(lr){5-6}
+Subj. & Model & BC & $\mathrm{BC}_\text{beyond}$ & all distractors & within cluster \\
+\midrule
+1 & 40sess & 1.867 / 1.302 & 1.468 / 1.007 & 0.982 / 0.863 & 0.905 / 0.506 \\
+  & 1sess  & 1.483 / 1.183 & 1.273 / 1.003 & 0.902 / 0.784 & 0.765 / 0.514 \\
+2 & 40sess & 1.829 / 1.285 & 1.461 / 1.009 & 0.977 / 0.854 & 0.900 / 0.507 \\
+  & 1sess  & 1.421 / 1.156 & 1.239 / 0.996 & 0.879 / 0.762 & 0.753 / 0.502 \\
+5 & 40sess & 1.867 / 1.304 & 1.460 / 1.002 & 0.986 / 0.872 & 0.905 / 0.516 \\
+  & 1sess  & 1.454 / 1.209 & 1.216 / 1.002 & 0.904 / 0.793 & 0.750 / 0.515 \\
+7 & 40sess & 1.509 / 1.225 & 1.246 / 1.001 & 0.953 / 0.835 & 0.849 / 0.508 \\
+  & 1sess  & 1.246 / 1.108 & 1.133 / 1.001 & 0.819 / 0.718 & 0.693 / 0.517 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=\linewidth]{fig12_nsd_robustness.png}
+\caption{Checks with existing outputs (MindEye2, four subjects, final images,
+  DreamSim). (A) Share of $\mathrm{BC}-1$ explained by 40 semantic clusters.
+  (B) BC from all trials, with session means removed, and from pairs of trials
+  in the same run only. (C) Standard measures for the decoders (filled) and
+  their category-only versions (open): BC against pairwise identification with
+  all distractors. (D) Category-controlled measures: $\mathrm{BC}_\text{beyond}$
+  against within-cluster identification.}
+\label{fig:robust}
+\end{figure}
+
+The prototype example of the Introduction can be built from real outputs. For
+each decoder we permute trials among the stimuli of the same cluster ($k=40$),
+so that each stimulus receives trials drawn at random from its cluster. The
+outputs of this category-only version depend on the stimulus only through its
+cluster, while their noise is that of the decoder. (A first construction, which
+replaced each stimulus mean with the mean of the other stimuli in its cluster,
+removed the noise in the stimulus means and gave $\mathrm{BC}_\text{beyond}<1$
+on synthetic data; we replaced it before analyzing the real outputs.)
+
+The category-only versions reach a final-image BC of 1.11--1.30 and a pairwise
+identification accuracy of 0.72--0.87 (\cref{tab:catonly}, \cref{fig:robust}C);
+for 40sess, identification is 0.84--0.87 against 0.95--0.99 for the decoders.
+BC and overall identification accuracy therefore cannot tell a decoder from a
+version of it that carries only category information. The category-controlled
+measures can: the category-only versions have $\mathrm{BC}_\text{beyond}$ of
+1.00 (0.996--1.010) and within-cluster identification of 0.50--0.52, whereas
+the decoders have 1.13--1.47 and 0.69--0.91, and the differences exclude 0 for
+every subject and model (\cref{fig:robust}D). Twenty different permutations
+change the category-only BC by at most 0.024.
+
+\subsection{Session and Run Effects}
+\label{sec:nsd-temporal}
+
+Because the three presentations of a shared image are close in time
+(\cref{sec:nsd-setup}), slow changes in the signal could make them similar for
+reasons unrelated to the stimulus. We had assumed the opposite structure when
+planning these checks and predicted that most images would be presented in
+three different sessions; this was wrong. We ran two checks on the 500 images of
+the final-image analysis in all four subjects. First, we removed each session's
+mean from the outputs before computing BC. This lowered final-image BC by 0.023
+to 0.049, but removing the means of randomly assigned sessions of the same
+sizes lowered it by 0.006 to 0.027; the part due to the actual sessions was
+therefore at most 0.03 at any stage, and BC stayed above 1 everywhere (lowest
+lower CI bound 1.070). Second, because squared distances between pairs of
+trials give $2\sigma_w^2$ within and $2(\sigma_w^2+\sigma_s^2)$ between stimuli,
+we computed BC from pairs of trials in the same run only, so that the
+within-stimulus and the between-stimulus comparisons are equally close in time.
+At every stage, for both models and all subjects, $\mathrm{BC}-1$ from
+same-run pairs was 94--106\% of $\mathrm{BC}-1$ from all pairs
+(\cref{fig:robust}B), and trials of different stimuli were no more similar
+within a run than across runs (ratio of mean distances 0.983--1.017). Temporal
+proximity of the repetitions therefore does not explain the consistency we
+measure. These checks cannot show that the same consistency would hold if the
+presentations were days apart.
 
 \subsection{Trial-to-Trial versus Sampling Variability}
 \label{sec:nsd-seed}
@@ -1104,9 +1245,11 @@ that the brain signal reliably steers the output for a given stimulus. It does
 not mean that the output resembles the stimulus, for which identification
 accuracy and perceptual similarity remain necessary. Nor does it mean that most
 of the image comes from the brain: in the prototype example of the
-Introduction, BC is very high although the generator supplies every detail.
-Category-controlled BC separates out only the consistency explained by the
-chosen categories.
+Introduction, BC is very high although the generator supplies every detail, and
+the category-only versions of the NSD decoders reach BC of up to 1.30 and
+pairwise identification of up to 0.87 (\cref{sec:nsd-catonly}).
+Category-controlled BC and within-cluster identification separate out only the
+consistency explained by the chosen categories.
 
 BC contains no information that $F$, the Calinski--Harabasz index or the ICC
 lack, and on NSD it ranks decoders as identification accuracy does. Its use lies
@@ -1159,8 +1302,10 @@ For decoders evaluated on repeated presentations, we suggest reporting:
 identification accuracy; (ii) BC at each stage of the pipeline, read as a
 description of consistency in each representation, with comparisons between
 models made at the same stage; (iii) BC from several seeds per trial, with
-BC(1) and BC($\infty$) or the sampling share; and (iv) category-controlled BC,
-with the definition of categories stated.
+BC(1) and BC($\infty$) or the sampling share; (iv) category-controlled BC and
+within-cluster identification, with the definition of categories stated; and
+(v) how far apart in time the repeated presentations are, with a check that
+consistency does not come from their proximity.
 
 \subsection{Limitations}
 
@@ -1181,12 +1326,15 @@ which is central to the concern of \citet{shirakawa2025}.
 
 \textbf{Repeated presentations are required.} BC needs at least two trials per
 stimulus. It cannot be computed for designs with single presentations, and its
-precision depends on the number of stimuli. We treat trials as independent;
-session- and run-level effects are not modeled.
+precision depends on the number of stimuli. In NSD, the three presentations of
+a shared image are usually minutes apart within one run. Removing session means
+and comparing only pairs of trials from the same run changed BC little
+(\cref{sec:nsd-temporal}), but these checks cannot show that the same
+consistency would hold for presentations days apart.
 
 \textbf{Scope of the NSD experiments.} MindEye2 was evaluated in four subjects,
-MindEye1 and Brain-Diffuser in subject 1 only, and the category and seed
-analyses in subject 1 only. Final images were evaluated on 500 images (414 for
+MindEye1 and Brain-Diffuser in subject 1 only. The category analyses cover
+four subjects, but the seed decomposition covers subject 1 only. Final images were evaluated on 500 images (414 for
 the method comparison) and the seed decomposition on 100. We did not evaluate
 MindEye2's refinement stage or other recent methods. MindEye1 was run without
 its best-of-16 selection, and Brain-Diffuser's regressions were retrained, so
@@ -1217,9 +1365,12 @@ the ANOVA $F$ statistic and an exact transform of the I2C2 estimate, and has a
 scale that does not depend on the number of trials. On GOD, it separates real
 from shuffled input in decoded features. On NSD, single-trial reconstructions
 of MindEye2, MindEye1 and Brain-Diffuser all show stimulus-specific
-consistency; less subject-specific training data lowers BC; about 45\% of the
-final-image BC excess is explained by 40 semantic clusters; and, in MindEye2,
-more than half of the within-stimulus variability of one reconstruction comes
+consistency, which is not explained by session effects or by the temporal
+proximity of the repetitions; less subject-specific training data lowers BC;
+43--53\% of the final-image BC excess is explained by 40 semantic clusters in
+four subjects; a category-only version of each decoder still reaches high BC
+and identification accuracy, and only category-controlled measures separate it
+from the decoder; and, in MindEye2, more than half of the within-stimulus variability of one reconstruction comes
 from the sampling seed. BC ranks decoders as identification accuracy does, and
 it does not tell how much of an image comes from the brain rather than from the
 prior. Its value is as a calibrated, label-only reliability diagnostic that
